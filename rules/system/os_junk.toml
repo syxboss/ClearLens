@@ -1,0 +1,143 @@
+schema_version = 1
+category = "system"
+app_name = "Operating System Junk"
+app_name_zh = "操作系统临时与日志"
+process_names_win = []
+process_names_mac = []
+
+[[rules]]
+id = "system.temp_files"
+title = "System Temporary Files"
+title_zh = "系统与用户临时文件"
+kind = "glob"
+risk = "safe"
+default_checked = true
+delete_mode = "permanent"
+min_age_days = 1
+impact_note = "Removes temporary scratch files left by installers and applications."
+impact_note_zh = "清理应用与安装程序遗留的临时中转文件，安全无副作用。"
+
+[rules.paths]
+macos = [
+  "~/Library/Caches/TemporaryItems/**",
+  "~/Library/Caches/com.apple.helpd/**",
+]
+windows = [
+  "%TEMP%/**",
+  "%LOCALAPPDATA%/Temp/**",
+]
+linux = [
+  "~/.cache/thumbnails/**",
+]
+
+[[rules]]
+id = "system.user_logs"
+title = "Application & User Logs"
+title_zh = "用户级应用运行日志"
+kind = "glob"
+risk = "safe"
+default_checked = true
+delete_mode = "permanent"
+min_age_days = 7
+impact_note = "Clears old diagnostic logs; active logs are recreated automatically if needed."
+impact_note_zh = "清理 7 天前的旧应用运行日志，不影响软件正常运行。"
+
+[rules.paths]
+macos = [
+  "~/Library/Logs/**",
+]
+windows = [
+  "%LOCALAPPDATA%/Logs/**",
+]
+linux = [
+  "~/.local/state/**/logs/**",
+]
+
+[[rules]]
+id = "system.crash_dumps"
+title = "Crash Reports & Error Dumps"
+title_zh = "崩溃转储与诊断报告"
+kind = "glob"
+risk = "safe"
+default_checked = true
+delete_mode = "permanent"
+min_age_days = 3
+impact_note = "Removes historical crash dumps and diagnostic reports."
+impact_note_zh = "删除历史崩溃转储文件（.dmp/.ips），安全释放空间。"
+
+[rules.paths]
+macos = [
+  "~/Library/Logs/DiagnosticReports/**",
+]
+windows = [
+  "%LOCALAPPDATA%/CrashDumps/**",
+  "%LOCALAPPDATA%/Microsoft/Windows/WER/**",
+]
+
+[[rules]]
+id = "system.thumbnail_caches"
+title = "Finder QuickLook & Explorer Thumbnail Cache"
+title_zh = "系统预览缩略图缓存"
+kind = "glob"
+risk = "safe"
+default_checked = true
+delete_mode = "permanent"
+min_age_days = 7
+impact_note = "Thumbnail previews will regenerate lazily when browsing folders."
+impact_note_zh = "清理系统文件预览缩略图缓存，下次浏览目录时自动按需重建。"
+
+[rules.paths]
+macos = [
+  "~/Library/Caches/com.apple.QuickLook.thumbnailcache/**",
+]
+windows = [
+  "%LOCALAPPDATA%/Microsoft/Windows/Explorer/thumbcache_*.db",
+  "%LOCALAPPDATA%/Microsoft/Windows/Explorer/iconcache_*.db",
+]
+
+[[rules]]
+id = "system.windows_update_cache"
+title = "Windows Update Download Cache"
+title_zh = "Windows 更新下载缓存"
+kind = "glob"
+risk = "recreatable"
+default_checked = false
+delete_mode = "permanent"
+requires_elevation = true
+min_age_days = 14
+impact_note = "Clears downloaded Windows Update packages (requires Administrator elevation)."
+impact_note_zh = "清理已安装的 Windows 更新安装包缓存（需按需授予管理员权限）。"
+
+[rules.paths]
+windows = [
+  "%WINDIR%/SoftwareDistribution/Download/**",
+]
+
+[[rules]]
+id = "system.downloads_old_installers"
+title = "Old Installers in Downloads (>60d)"
+title_zh = "下载目录超 60 天旧安装包"
+kind = "glob"
+risk = "review_required"
+default_checked = false
+delete_mode = "trash"
+min_age_days = 60
+impact_note = "Moves old .dmg, .pkg, .msi, .exe, and .iso installers in Downloads to OS Trash."
+impact_note_zh = "将下载目录中超过 60 天未使用的安装包移入回收站/废纸篓，可随时还原。"
+
+[rules.paths]
+macos = [
+  "~/Downloads/*.dmg",
+  "~/Downloads/*.pkg",
+  "~/Downloads/*.iso",
+]
+windows = [
+  "%USERPROFILE%/Downloads/*.msi",
+  "%USERPROFILE%/Downloads/*.exe",
+  "%USERPROFILE%/Downloads/*.iso",
+]
+linux = [
+  "~/Downloads/*.deb",
+  "~/Downloads/*.AppImage",
+  "~/Downloads/*.iso",
+]

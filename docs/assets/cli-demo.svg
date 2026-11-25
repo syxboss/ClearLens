@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="466" viewBox="0 0 980 466">
+  <rect width="980" height="466" rx="14" fill="#0b1220" stroke="#1e293b" stroke-width="1.5" />
+  <rect width="980" height="36" rx="14" fill="#131c31" />
+  <rect y="22" width="980" height="14" fill="#131c31" />
+  <circle cx="22" cy="18" r="6" fill="#ff5f56" />
+  <circle cx="42" cy="18" r="6" fill="#ffbd2e" />
+  <circle cx="62" cy="18" r="6" fill="#27c93f" />
+  <text x="490" y="22" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" fill="#94a3b8">clens — zsh (ClearLens CLI)</text>
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="13">
+    <text x="24" y="58" fill="#38bdf8" xml:space="preserve">$ clens rules validate</text>
+    <text x="24" y="78" fill="#34d399" xml:space="preserve">VALID: 6 rule packs (39 rules) passed safety blocklist checks.</text>
+    <text x="24" y="98" fill="#cbd5e1" xml:space="preserve"></text>
+    <text x="24" y="118" fill="#38bdf8" xml:space="preserve">$ clens scan --mode all --simulate-os macos</text>
+    <text x="24" y="138" fill="#cbd5e1" xml:space="preserve">┌─────────────┬──────────────────────────────────┬───────────┬───────┬────────────────────────────────────────────────────────────────────────────┐</text>
+    <text x="24" y="158" fill="#cbd5e1" xml:space="preserve">│ Risk        ┆ Rule ID                          ┆ Size      ┆ Files ┆ Target Path                                                                │</text>
+    <text x="24" y="178" fill="#cbd5e1" xml:space="preserve">╞═════════════╪══════════════════════════════════╪═══════════╪═══════╪════════════════════════════════════════════════════════════════════════════╡</text>
+    <text x="24" y="198" fill="#fbbf24" xml:space="preserve">│ RECREATABLE ┆ dev.cold_project_artifacts       ┆ 1.00 MB   ┆ 1     ┆ /tmp/demo_mac/Projects/rust-wasm-demo/target                               │</text>
+    <text x="24" y="218" fill="#cbd5e1" xml:space="preserve">├╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤</text>
+    <text x="24" y="238" fill="#fbbf24" xml:space="preserve">│ RECREATABLE ┆ dev.cold_project_artifacts       ┆ 768.00 KB ┆ 1     ┆ /tmp/demo_mac/Projects/legacy-dashboard/node_modules                       │</text>
+    <text x="24" y="258" fill="#cbd5e1" xml:space="preserve">├╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤</text>
+    <text x="24" y="278" fill="#fb7185" xml:space="preserve">│ REVIEW      ┆ system.downloads_old_installers  ┆ 640.00 KB ┆ 1     ┆ /tmp/demo_mac/Downloads/OldInstaller.dmg                                   │</text>
+    <text x="24" y="298" fill="#cbd5e1" xml:space="preserve">├╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤</text>
+    <text x="24" y="318" fill="#4ade80" xml:space="preserve">│ SAFE        ┆ browsers.chrome.cache            ┆ 512.00 KB ┆ 1     ┆ /tmp/demo_mac/Library/Caches/Google/Chrome/Default/Cache                   │</text>
+    <text x="24" y="338" fill="#cbd5e1" xml:space="preserve">├╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤</text>
+    <text x="24" y="358" fill="#4ade80" xml:space="preserve">│ SAFE        ┆ wechat.cache.thumbnails_and_temp ┆ 256.00 KB ┆ 1     ┆ /tmp/demo_mac/Library/Containers/com.tencent.xinWeChat/Data/Library/Caches │</text>
+    <text x="24" y="378" fill="#cbd5e1" xml:space="preserve">└─────────────┴──────────────────────────────────┴───────────┴───────┴────────────────────────────────────────────────────────────────────────────┘</text>
+    <text x="24" y="398" fill="#cbd5e1" xml:space="preserve"></text>
+    <text x="24" y="418" fill="#34d399" xml:space="preserve">Summary (MacOs, 2 ms): Total Reclaimable = 3.12 MB (Safe: 768.00 KB, Recreatable: 1.75 MB, Review: 640.00 KB)</text>
+  </g>
+</svg>

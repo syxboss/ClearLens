@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ClearLens Rule Pack",
+  "type": "object",
+  "required": ["schema_version", "category", "app_name", "rules"],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "category": {
+      "type": "string",
+      "enum": ["system", "browsers", "dev_ai", "social_office", "creative_media", "gaming"]
+    },
+    "app_name": { "type": "string", "minLength": 1 },
+    "app_name_zh": { "type": "string" },
+    "process_names_win": { "type": "array", "items": { "type": "string" } },
+    "process_names_mac": { "type": "array", "items": { "type": "string" } },
+    "rules": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "kind", "risk", "default_checked", "delete_mode"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9_.]+$" },
+          "title": { "type": "string", "minLength": 1 },
+          "title_zh": { "type": "string" },
+          "kind": { "type": "string", "enum": ["glob", "smart_scanner"] },
+          "scanner": { "type": "string" },
+          "risk": { "type": "string", "enum": ["safe", "recreatable", "review_required"] },
+          "default_checked": { "type": "boolean" },
+          "delete_mode": { "type": "string", "enum": ["permanent", "trash", "native_command"] },
+          "requires_elevation": { "type": "boolean" },
+          "min_age_days": { "type": "integer", "minimum": 0 },
+          "impact_note": { "type": "string" },
+          "impact_note_zh": { "type": "string" },
+          "paths": {
+            "type": "object",
+            "properties": {
+              "macos": { "type": "array", "items": { "type": "string" } },
+              "windows": { "type": "array", "items": { "type": "string" } },
+              "linux": { "type": "array", "items": { "type": "string" } }
+            }
+          },
+          "exclude": {
+            "type": "object",
+            "properties": {
+              "patterns": { "type": "array", "items": { "type": "string" } }
+            }
+          },
+          "params": { "type": "object" }
+        }
+      }
+    }
+  }
+}

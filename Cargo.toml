@@ -1,0 +1,39 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/clearlens-core",
+    "crates/clearlens-cli",
+    "apps/desktop/src-tauri",
+]
+default-members = [
+    "crates/clearlens-core",
+    "crates/clearlens-cli",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/syxboss/ClearLens"
+description = "Cross-platform transparent disk cleaner, developer/AI cache optimizer, and Space Lens visualizer"
+
+[workspace.dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+toml = "0.8"
+globset = "=0.4.16"
+rayon = "1.10"
+rustc-hash = "2.1"
+thiserror = "2.0"
+chrono = { version = "0.4", features = ["serde"] }
+dirs = "6.0"
+trash = "=5.2.2"
+sysinfo = { version = "0.33", default-features = false, features = ["system"] }
+blake3 = "=1.5.5"
+mimalloc = { version = "=0.1.43", default-features = false }
+clap = { version = "4.5", features = ["derive"] }
+comfy-table = "7.1"
+indicatif = "0.17"
+libc = "0.2"
+tempfile = "3.14"
+filetime = "0.2"

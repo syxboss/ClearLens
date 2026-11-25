@@ -1,0 +1,100 @@
+schema_version = 1
+category = "creative_media"
+app_name = "Creative & Video Editing"
+app_name_zh = "影音剪辑与设计软件缓存"
+process_names_win = ["JianyingPro.exe", "CapCut.exe", "Adobe Premiere Pro.exe", "AfterFX.exe", "Photoshop.exe", "Resolve.exe"]
+process_names_mac = ["JianyingPro", "CapCut", "Adobe Premiere Pro", "After Effects", "Adobe Photoshop", "Final Cut Pro", "DaVinci Resolve"]
+
+[[rules]]
+id = "creative.jianying_capcut.cache"
+title = "Jianying Pro / CapCut Render & Proxy Cache"
+title_zh = "剪映 / CapCut 渲染代理与缓存"
+kind = "glob"
+risk = "recreatable"
+default_checked = true
+delete_mode = "permanent"
+min_age_days = 7
+impact_note = "Clears video proxy & render caches while strictly preserving draft project files."
+impact_note_zh = "清理剪映/CapCut 渲染缓存与转码代理文件，严格保留所有工程草稿。"
+
+[rules.paths]
+macos = [
+  "~/Movies/JianyingPro/User Data/Cache/**",
+  "~/Movies/CapCut/User Data/Cache/**",
+  "~/Library/Containers/com.lemon.lvpro/Data/Library/Caches/**",
+]
+windows = [
+  "%LOCALAPPDATA%/JianyingPro/User Data/Cache/**",
+  "%LOCALAPPDATA%/CapCut/User Data/Cache/**",
+]
+
+[rules.exclude]
+patterns = ["**/Projects/**", "**/*.json"]
+
+[[rules]]
+id = "creative.adobe.media_cache"
+title = "Adobe Premiere & After Effects Media Cache"
+title_zh = "Adobe Premiere / AE 媒体与峰值缓存"
+kind = "glob"
+risk = "recreatable"
+default_checked = true
+delete_mode = "permanent"
+min_age_days = 7
+impact_note = "Clears Adobe Media Cache, Peak Files, and Disk Cache; projects reopen cleanly."
+impact_note_zh = "清理 Adobe 媒体缓存与音频峰值文件，不影响工程文件，打开工程时按需重新生成。"
+
+[rules.paths]
+macos = [
+  "~/Library/Application Support/Adobe/Common/Media Cache Files/**",
+  "~/Library/Application Support/Adobe/Common/Media Cache/**",
+  "~/Library/Application Support/Adobe/Common/Peak Files/**",
+  "~/Library/Caches/Adobe/After Effects/**",
+]
+windows = [
+  "%APPDATA%/Adobe/Common/Media Cache Files/**",
+  "%APPDATA%/Adobe/Common/Media Cache/**",
+  "%APPDATA%/Adobe/Common/Peak Files/**",
+  "%LOCALAPPDATA%/Adobe/After Effects/**",
+]
+
+[[rules]]
+id = "creative.final_cut_davinci.cache"
+title = "Final Cut Pro & DaVinci Resolve Render Caches"
+title_zh = "Final Cut Pro 与达芬奇渲染缓存"
+kind = "glob"
+risk = "recreatable"
+default_checked = false
+delete_mode = "permanent"
+min_age_days = 14
+impact_note = "Removes temporary video render caches older than 14 days."
+impact_note_zh = "清理 14 天前的渲染缓存与代理切片，不影响原始素材与剪辑工程。"
+
+[rules.paths]
+macos = [
+  "~/Movies/*.fcpbundle/*/Render Files/**",
+  "~/Movies/CacheClip/**",
+]
+windows = [
+  "%USERPROFILE%/Videos/CacheClip/**",
+]
+
+[[rules]]
+id = "creative.figma_photoshop.cache"
+title = "Figma & Photoshop Temp Caches"
+title_zh = "Figma 与 Photoshop 临时缓存"
+kind = "glob"
+risk = "safe"
+default_checked = true
+delete_mode = "permanent"
+impact_note = "Clears desktop design tool web/scratch caches."
+impact_note_zh = "清理 Figma 桌面端与 Photoshop 临时缓存。"
+
+[rules.paths]
+macos = [
+  "~/Library/Application Support/Figma/Cache/**",
+  "~/Library/Caches/com.adobe.Photoshop/**",
+]
+windows = [
+  "%APPDATA%/Figma/Cache/**",
+  "%LOCALAPPDATA%/Adobe/Photoshop*/Temp/**",
+]

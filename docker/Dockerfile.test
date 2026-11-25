@@ -1,0 +1,36 @@
+# Isolated Multi-Stage Verification Container for ClearLens
+# Zero host filesystem writes; all unit, integration, CLI E2E, and frontend tests run inside Docker.
+
+FROM rust:slim-bookworm AS rust-verify
+WORKDIR /app
+COPY Cargo.toml ./
+COPY rules ./rules
+COPY crates ./crates
+COPY apps/desktop/src-tauri ./apps/desktop/src-tauri
+COPY tests ./tests
+
+# 1. Build & run all Rust unit and integration tests
+RUN cargo test -p clearlens-core -p clearlens-cli
+
+# 2. Build clens release binary & execute isolated macOS + Windows simulated E2E suite (strictly enforcing pipefail!)
+RUN cargo build --release -p clearlens-cli
+RUN bash -o pipefail -c 'chmod +x /app/tests/docker_e2e_suite.sh && /app/tests/docker_e2e_suite.sh /app/target/release/clens | tee /tmp/rust_e2e_report.txt'
+
+FROM node:22-alpine AS web-verify
+WORKDIR /app/apps/desktop
+COPY apps/desktop/package.json ./
+COPY apps/desktop/tsconfig.json ./
+COPY apps/desktop/vite.config.ts ./
+COPY apps/desktop/index.html ./
+COPY apps/desktop/src ./src
+
+RUN npm install --no-audit --no-fund
+RUN npx tsc --noEmit
+RUN npx vitest run > /tmp/web_test_report.txt && cat /tmp/web_test_report.txt
+RUN npx vite build
+
+FROM debian:bookworm-slim AS summary
+COPY --from=rust-verify /tmp/rust_e2e_report.txt /reports/rust_e2e_report.txt
+COPY --from=web-verify /tmp/web_test_report.txt /reports/web_test_report.txt
+COPY --from=rust-verify /app/target/release/clens /usr/local/bin/clens
+CMD ["sh", "-c", "cat /reports/rust_e2e_report.txt && echo '--- WEB VERIFY ---' && cat /reports/web_test_report.txt && echo 'ALL DOCKER TESTS PASSED'"]

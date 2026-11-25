@@ -1,0 +1,190 @@
+schema_version = 1
+category = "dev_ai"
+app_name = "Developer Toolchains & Local AI"
+app_name_zh = "开发者工具链与 AI 模型"
+process_names_win = ["node.exe", "cargo.exe", "docker.exe", "ollama.exe"]
+process_names_mac = ["Xcode", "Docker Desktop", "ollama", "LM Studio"]
+
+[[rules]]
+id = "dev.cold_project_artifacts"
+title = "Inactive Project Build Artifacts"
+title_zh = "冷门开发项目构建产物（node_modules / target / .venv）"
+kind = "smart_scanner"
+scanner = "cold_project_artifacts"
+risk = "recreatable"
+default_checked = true
+delete_mode = "permanent"
+impact_note = "Only targets projects whose source files have not changed within the stale threshold. Source code and git history are untouched."
+impact_note_zh = "仅匹配源码超过设定天数未变动的冷项目构建目录，源码与 Git 历史完好无损，下次运行构建命令可恢复。"
+
+[rules.params]
+stale_days = 30
+target_dirs = ["node_modules", "target", ".venv", ".next", "dist", "build", "DerivedData"]
+manifest_markers = ["package.json", "Cargo.toml", "pyproject.toml", "Package.swift", "go.mod"]
+
+[[rules]]
+id = "ai.ollama_models"
+title = "Local Ollama Models"
+title_zh = "Ollama 本地大模型权重"
+kind = "smart_scanner"
+scanner = "ollama_models"
+risk = "review_required"
+default_checked = false
+delete_mode = "trash"
+impact_note = "Lists installed local Ollama models with sizes; review before removing unused multi-GB weights."
+impact_note_zh = "识别本机 Ollama 模型及真实占用，建议核对后再移除不再使用的 GB 级权重。"
+
+[[rules]]
+id = "ai.huggingface_hub"
+title = "HuggingFace Hub Model Cache"
+title_zh = "HuggingFace 模型下载缓存"
+kind = "smart_scanner"
+scanner = "huggingface_hub"
+risk = "recreatable"
+default_checked = false
+delete_mode = "trash"
+impact_note = "Cached model snapshots from HuggingFace Hub; re-downloading will be required if used again."
+impact_note_zh = "清理 HuggingFace Hub 本地缓存的模型仓库，再次推理时需重新拉取。"
+
+[[rules]]
+id = "dev.docker_prune"
+title = "Docker Build Cache & Dangling Images"
+title_zh = "Docker 构建缓存与悬空镜像"
+kind = "smart_scanner"
+scanner = "docker_system_df"
+risk = "recreatable"
+default_checked = false
+delete_mode = "native_command"
+impact_note = "Uses official docker prune commands instead of touching raw virtual disk files."
+impact_note_zh = "通过官方 docker prune 安全回收构建缓存，绝不直接删除底层虚拟磁盘文件。"
+
+[[rules]]
+id = "dev.npm_cache"
+title = "npm Global Download Cache"
+title_zh = "npm 全局包下载缓存"
+kind = "glob"
+risk = "recreatable"
+default_checked = true
+delete_mode = "permanent"
+impact_note = "Clears npm _cacache tarballs; installed project node_modules are unaffected."
+impact_note_zh = "清理 npm 下载缓存包，不影响任何已安装项目的依赖。"
+
+[rules.paths]
+macos = ["~/.npm/_cacache/**"]
+windows = ["%LOCALAPPDATA%/npm-cache/_cacache/**", "%APPDATA%/npm-cache/_cacache/**"]
+linux = ["~/.npm/_cacache/**"]
+
+[[rules]]
+id = "dev.pnpm_metadata"
+title = "pnpm Metadata & Temp Cache"
+title_zh = "pnpm 元数据与临时缓存"
+kind = "glob"
+risk = "safe"
+default_checked = true
+delete_mode = "permanent"
+impact_note = "Clears pnpm registry metadata cache while preserving content-addressable store hardlinks."
+impact_note_zh = "仅清理 pnpm 元数据索引缓存，严格保留内容寻址存储（store）硬链接池。"
+
+[rules.paths]
+macos = ["~/Library/Caches/pnpm/metadata-v1.3/**", "~/.cache/pnpm/metadata*/**"]
+windows = ["%LOCALAPPDATA%/pnpm-cache/metadata*/**"]
+linux = ["~/.cache/pnpm/metadata*/**"]
+
+[[rules]]
+id = "dev.yarn_bun_cache"
+title = "Yarn & Bun Global Caches"
+title_zh = "Yarn 与 Bun 全局包缓存"
+kind = "glob"
+risk = "recreatable"
+default_checked = true
+delete_mode = "permanent"
+impact_note = "Clears global Yarn and Bun download caches."
+impact_note_zh = "清理 Yarn 与 Bun 全局包下载缓存。"
+
+[rules.paths]
+macos = ["~/Library/Caches/Yarn/**", "~/.bun/install/cache/**"]
+windows = ["%LOCALAPPDATA%/Yarn/Cache/**", "%USERPROFILE%/.bun/install/cache/**"]
+linux = ["~/.cache/yarn/**", "~/.bun/install/cache/**"]
+
+[[rules]]
+id = "dev.python_uv_pip"
+title = "Python uv & pip Wheel Cache"
+title_zh = "Python uv 与 pip 轮子缓存"
+kind = "glob"
+risk = "recreatable"
+default_checked = true
+delete_mode = "permanent"
+impact_note = "Clears cached Python wheels; active virtual environments are untouched."
+impact_note_zh = "清理 uv 与 pip 缓存的 wheel 安装包，不影响现有虚拟环境。"
+
+[rules.paths]
+macos = ["~/.cache/uv/**", "~/Library/Caches/pip/**"]
+windows = ["%LOCALAPPDATA%/uv/cache/**", "%LOCALAPPDATA%/pip/cache/**"]
+linux = ["~/.cache/uv/**", "~/.cache/pip/**"]
+
+[[rules]]
+id = "dev.cargo_cache"
+title = "Rust Cargo Registry Crate Cache"
+title_zh = "Rust Cargo Crate 下载压缩包缓存"
+kind = "glob"
+risk = "recreatable"
+default_checked = true
+delete_mode = "permanent"
+min_age_days = 14
+impact_note = "Clears downloaded .crate archives older than 14 days."
+impact_note_zh = "清理 14 天前下载的 .crate 压缩包缓存，保留已编译工具链与二进制。"
+
+[rules.paths]
+macos = ["~/.cargo/registry/cache/**"]
+windows = ["%USERPROFILE%/.cargo/registry/cache/**"]
+linux = ["~/.cargo/registry/cache/**"]
+
+[[rules]]
+id = "dev.gradle_cache"
+title = "Gradle Wrapper & Build Cache"
+title_zh = "Gradle 构建与依赖缓存"
+kind = "glob"
+risk = "recreatable"
+default_checked = false
+delete_mode = "permanent"
+min_age_days = 30
+impact_note = "Clears Gradle caches unused for 30+ days."
+impact_note_zh = "清理 30 天未使用的 Gradle 缓存，下次编译 Android/JVM 项目会重新拉取。"
+
+[rules.paths]
+macos = ["~/.gradle/caches/build-cache-1/**"]
+windows = ["%USERPROFILE%/.gradle/caches/build-cache-1/**"]
+linux = ["~/.gradle/caches/build-cache-1/**"]
+
+[[rules]]
+id = "dev.xcode_derived_data"
+title = "Xcode DerivedData & Simulator Caches"
+title_zh = "Xcode DerivedData 编译产物与模拟器缓存"
+kind = "glob"
+risk = "recreatable"
+default_checked = true
+delete_mode = "permanent"
+min_age_days = 7
+impact_note = "Safely cleans Xcode intermediate build indexes; Xcode regenerates them on next build."
+impact_note_zh = "安全清理 Xcode 中间编译产物与模拟器缓存，大幅释放 macOS 空间。"
+
+[rules.paths]
+macos = [
+  "~/Library/Developer/Xcode/DerivedData/**",
+  "~/Library/Developer/CoreSimulator/Caches/**",
+]
+
+[[rules]]
+id = "ai.lmstudio_cache"
+title = "LM Studio Temp & Logs"
+title_zh = "LM Studio 临时与运行缓存"
+kind = "glob"
+risk = "safe"
+default_checked = true
+delete_mode = "permanent"
+impact_note = "Clears LM Studio temporary logs and UI cache without removing downloaded GGUF models."
+impact_note_zh = "清理 LM Studio 临时缓存与日志，不删除已下载的 GGUF 模型权重。"
+
+[rules.paths]
+macos = ["~/Library/Application Support/LM Studio/Cache/**", "~/Library/Application Support/LM Studio/logs/**"]
+windows = ["%APPDATA%/LM Studio/Cache/**", "%APPDATA%/LM Studio/logs/**"]

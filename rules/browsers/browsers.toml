@@ -1,0 +1,166 @@
+schema_version = 1
+category = "browsers"
+app_name = "Web Browsers"
+app_name_zh = "主流浏览器缓存"
+process_names_win = ["chrome.exe", "msedge.exe", "brave.exe", "firefox.exe", "arc.exe"]
+process_names_mac = ["Google Chrome", "Microsoft Edge", "Brave Browser", "Firefox", "Arc", "Safari"]
+
+[[rules]]
+id = "browsers.chrome.cache"
+title = "Google Chrome Web & GPU Cache"
+title_zh = "Chrome 网页与 GPU 缓存"
+kind = "glob"
+risk = "safe"
+default_checked = true
+delete_mode = "permanent"
+min_age_days = 0
+impact_note = "Preserves cookies, passwords, bookmarks, and login sessions; clears only cached web assets."
+impact_note_zh = "严格保留 Cookie、登录态、书签与历史记录，仅清理网页静态资源与 GPU 着色缓存。"
+
+[rules.paths]
+macos = [
+  "~/Library/Caches/Google/Chrome/*/Cache/**",
+  "~/Library/Caches/Google/Chrome/*/Code Cache/**",
+  "~/Library/Application Support/Google/Chrome/*/GPUCache/**",
+  "~/Library/Application Support/Google/Chrome/*/DawnCache/**",
+  "~/Library/Application Support/Google/Chrome/*/Service Worker/CacheStorage/**",
+]
+windows = [
+  "%LOCALAPPDATA%/Google/Chrome/User Data/*/Cache/**",
+  "%LOCALAPPDATA%/Google/Chrome/User Data/*/Code Cache/**",
+  "%LOCALAPPDATA%/Google/Chrome/User Data/*/GPUCache/**",
+  "%LOCALAPPDATA%/Google/Chrome/User Data/*/DawnCache/**",
+  "%LOCALAPPDATA%/Google/Chrome/User Data/*/Service Worker/CacheStorage/**",
+]
+linux = [
+  "~/.cache/google-chrome/*/Cache/**",
+  "~/.cache/google-chrome/*/Code Cache/**",
+]
+
+[rules.exclude]
+patterns = [
+  "**/Cookies*",
+  "**/Login Data*",
+  "**/Web Data*",
+  "**/Bookmarks*",
+  "**/History*",
+  "**/Local Storage/**",
+  "**/IndexedDB/**",
+]
+
+[[rules]]
+id = "browsers.edge.cache"
+title = "Microsoft Edge Web & GPU Cache"
+title_zh = "Microsoft Edge 网页与 GPU 缓存"
+kind = "glob"
+risk = "safe"
+default_checked = true
+delete_mode = "permanent"
+min_age_days = 0
+impact_note = "Preserves cookies, passwords, and login sessions."
+impact_note_zh = "严格保留 Cookie、登录态与收藏夹，仅清理网页与 GPU 缓存。"
+
+[rules.paths]
+macos = [
+  "~/Library/Caches/Microsoft Edge/*/Cache/**",
+  "~/Library/Caches/Microsoft Edge/*/Code Cache/**",
+  "~/Library/Application Support/Microsoft Edge/*/GPUCache/**",
+  "~/Library/Application Support/Microsoft Edge/*/Service Worker/CacheStorage/**",
+]
+windows = [
+  "%LOCALAPPDATA%/Microsoft/Edge/User Data/*/Cache/**",
+  "%LOCALAPPDATA%/Microsoft/Edge/User Data/*/Code Cache/**",
+  "%LOCALAPPDATA%/Microsoft/Edge/User Data/*/GPUCache/**",
+  "%LOCALAPPDATA%/Microsoft/Edge/User Data/*/Service Worker/CacheStorage/**",
+]
+
+[rules.exclude]
+patterns = ["**/Cookies*", "**/Login Data*", "**/Web Data*", "**/Bookmarks*", "**/History*"]
+
+[[rules]]
+id = "browsers.arc.cache"
+title = "Arc Browser Cache"
+title_zh = "Arc 浏览器缓存"
+kind = "glob"
+risk = "safe"
+default_checked = true
+delete_mode = "permanent"
+impact_note = "Clears Arc web cache while preserving Spaces, tabs, and logins."
+impact_note_zh = "清理 Arc 网页缓存，保留所有 Spaces、标签页与登录态。"
+
+[rules.paths]
+macos = [
+  "~/Library/Caches/Arc/*/Cache/**",
+  "~/Library/Caches/Arc/*/Code Cache/**",
+  "~/Library/Application Support/Arc/User Data/*/GPUCache/**",
+]
+windows = [
+  "%LOCALAPPDATA%/Packages/TheBrowserCompany.Arc*/LocalCache/Local/Arc/User Data/*/Cache/**",
+  "%LOCALAPPDATA%/Packages/TheBrowserCompany.Arc*/LocalCache/Local/Arc/User Data/*/GPUCache/**",
+]
+
+[rules.exclude]
+patterns = ["**/Cookies*", "**/Login Data*", "**/History*"]
+
+[[rules]]
+id = "browsers.brave.cache"
+title = "Brave Browser Cache"
+title_zh = "Brave 浏览器缓存"
+kind = "glob"
+risk = "safe"
+default_checked = true
+delete_mode = "permanent"
+impact_note = "Clears Brave cached assets while keeping bookmarks and passwords intact."
+impact_note_zh = "清理 Brave 浏览器静态缓存，保留书签、密码与登录态。"
+
+[rules.paths]
+macos = [
+  "~/Library/Caches/BraveSoftware/Brave-Browser/*/Cache/**",
+  "~/Library/Caches/BraveSoftware/Brave-Browser/*/Code Cache/**",
+]
+windows = [
+  "%LOCALAPPDATA%/BraveSoftware/Brave-Browser/User Data/*/Cache/**",
+  "%LOCALAPPDATA%/BraveSoftware/Brave-Browser/User Data/*/Code Cache/**",
+]
+
+[rules.exclude]
+patterns = ["**/Cookies*", "**/Login Data*", "**/Bookmarks*"]
+
+[[rules]]
+id = "browsers.firefox.cache"
+title = "Mozilla Firefox Profile Cache"
+title_zh = "Firefox 网页缓存"
+kind = "glob"
+risk = "safe"
+default_checked = true
+delete_mode = "permanent"
+impact_note = "Clears Firefox cache2 entries; cookies and logins are untouched."
+impact_note_zh = "仅清理 Firefox cache2 目录，保留登录信息与扩展数据。"
+
+[rules.paths]
+macos = [
+  "~/Library/Caches/Firefox/Profiles/*/cache2/**",
+]
+windows = [
+  "%LOCALAPPDATA%/Mozilla/Firefox/Profiles/*/cache2/**",
+]
+linux = [
+  "~/.cache/mozilla/firefox/*/cache2/**",
+]
+
+[[rules]]
+id = "browsers.safari.cache"
+title = "Apple Safari Cache"
+title_zh = "Safari 浏览器缓存"
+kind = "glob"
+risk = "safe"
+default_checked = true
+delete_mode = "permanent"
+impact_note = "Clears Safari WebKit network & media caches."
+impact_note_zh = "清理 Safari WebKit 网页缓存与媒体预览缓存。"
+
+[rules.paths]
+macos = [
+  "~/Library/Caches/com.apple.Safari/WebKitCache/**",
+  "~/Library/Caches/com.apple.Safari/fsCachedData/**",
+]

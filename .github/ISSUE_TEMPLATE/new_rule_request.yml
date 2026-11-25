@@ -1,0 +1,38 @@
+name: New App / Cache Rule Request
+description: Suggest support for a new application cache, AI tool, or developer toolchain
+labels: ["rule-request"]
+body:
+  - type: input
+    id: app_name
+    attributes:
+      label: Application Name
+      placeholder: "e.g., Cursor / LM Studio / DaVinci Resolve"
+    validations:
+      required: true
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options:
+        - system
+        - browsers
+        - dev_ai
+        - social_office
+        - creative_media
+        - gaming
+    validations:
+      required: true
+  - type: textarea
+    id: paths
+    attributes:
+      label: Known Cache Paths (macOS / Windows)
+      placeholder: |
+        macOS: ~/Library/Caches/...
+        Windows: %LOCALAPPDATA%/...
+    validations:
+      required: true
+  - type: textarea
+    id: exclusions
+    attributes:
+      label: Important Files to Exclude (DBs, credentials, user projects)
+      placeholder: "**/*.db, **/Projects/**"

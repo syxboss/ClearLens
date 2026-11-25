@@ -1,0 +1,45 @@
+# Verifies Windows cross-platform compilation of ALL workspace crates (clearlens-core,
+# clearlens-cli, AND clearlens-desktop Tauri v2 with tauri.conf.json + icons + commands.rs)
+# strictly inside Docker without heavy Linux WebKitGTK apt dependencies.
+
+FROM node:22-alpine AS web-dist
+WORKDIR /app/apps/desktop
+COPY apps/desktop/package.json ./
+COPY apps/desktop/tsconfig.json ./
+COPY apps/desktop/vite.config.ts ./
+COPY apps/desktop/index.html ./
+COPY apps/desktop/src ./src
+RUN npm install --no-audit --no-fund && npx tsc --noEmit && npx vite build
+
+FROM rust:slim-bookworm AS windows-full-workspace-check
+WORKDIR /app
+RUN apt-get update && apt-get install -o Acquire::Retries=5 -y --no-install-recommends binutils-mingw-w64-x86-64 && rm -rf /var/lib/apt/lists/* \
+ && printf '#!/bin/sh\nexec /usr/bin/x86_64-w64-mingw32-windres --preprocessor=/usr/bin/cpp "$@"\n' > /usr/local/bin/x86_64-w64-mingw32-windres \
+ && chmod +x /usr/local/bin/x86_64-w64-mingw32-windres
+RUN rustup target add x86_64-pc-windows-gnu
+COPY Cargo.toml ./
+COPY rules ./rules
+COPY crates ./crates
+COPY apps/desktop/src-tauri ./apps/desktop/src-tauri
+COPY .github/workflows ./.github/workflows
+COPY --from=web-dist /app/apps/desktop/dist ./apps/desktop/dist
+
+# 1. Verify binary headers of Windows .ico and macOS .icns icons
+RUN bash -c '\
+  set -euo pipefail; \
+  test -s apps/desktop/src-tauri/icons/icon.ico; \
+  test -s apps/desktop/src-tauri/icons/icon.icns; \
+  test "$(head -c 4 apps/desktop/src-tauri/icons/icon.icns)" = "icns"; \
+  ls -lh apps/desktop/src-tauri/icons/ \
+'
+
+# 2. Cross-check ENTIRE workspace (clearlens-core + clearlens-cli + clearlens-desktop Tauri v2) for Windows!
+#    This runs tauri-build::build(), validates tauri.conf.json, capabilities/default.json,
+#    icon.ico / icon.icns / PNGs, Windows windows-sys FFI, and all #[tauri::command] bindings.
+#    Note: --no-default-features skips compiling libmimalloc-sys C code without MinGW GCC on ARM64 Linux;
+#    native builds (Dockerfile.package-install & GitHub Actions windows-latest/macos-latest) enable mimalloc by default.
+RUN cargo check --target x86_64-pc-windows-gnu --workspace --no-default-features
+
+FROM debian:bookworm-slim AS done
+COPY --from=windows-full-workspace-check /app/apps/desktop/src-tauri/tauri.conf.json /tmp/tauri.conf.json
+CMD ["echo", "ALL WORKSPACE CRATES (CORE + CLI + TAURI V2 DESKTOP) PASSED WINDOWS CROSS-CHECK"]

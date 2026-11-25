@@ -1,0 +1,67 @@
+# Full Packaging, Clean-OS Installation & In-Container File Cleanup Test for ClearLens v0.1
+# Stage 1 builds real .deb and .tar.gz release packages; Stage 3 installs ONLY the .deb in a
+# clean Debian container (no Rust toolchain, no source tree) and performs real file cleanup.
+
+FROM rust:slim-bookworm AS rust-packager
+WORKDIR /app
+COPY Cargo.toml ./
+COPY README.md ./
+COPY LICENSE-MIT ./
+COPY rules ./rules
+COPY crates ./crates
+COPY apps/desktop/src-tauri ./apps/desktop/src-tauri
+
+# 1. Run ALL P0 + P1 + Code-Review Regression Rust unit & integration tests (strictly enforcing pipefail!)
+RUN bash -o pipefail -c 'cargo test -p clearlens-core -p clearlens-cli | tee /tmp/cargo_test_report.txt'
+
+# 2. Build stripped release binary
+RUN cargo build --release -p clearlens-cli && strip /app/target/release/clens
+
+# 3. Package real Debian .deb installer + portable .tar.gz + SHA256SUMS
+RUN bash -c '\
+  set -euo pipefail; \
+  ARCH=$(dpkg --print-architecture); \
+  VER=0.1.0; \
+  PKG_ROOT="/tmp/deb/clearlens-cli_${VER}_${ARCH}"; \
+  mkdir -p "${PKG_ROOT}/DEBIAN" "${PKG_ROOT}/usr/bin" "${PKG_ROOT}/usr/share/doc/clearlens" "${PKG_ROOT}/usr/share/clearlens/rules"; \
+  cp /app/target/release/clens "${PKG_ROOT}/usr/bin/clens"; \
+  chmod 0755 "${PKG_ROOT}/usr/bin/clens"; \
+  cp /app/README.md /app/LICENSE-MIT "${PKG_ROOT}/usr/share/doc/clearlens/"; \
+  cp -r /app/rules/* "${PKG_ROOT}/usr/share/clearlens/rules/"; \
+  printf "Package: clearlens-cli\nVersion: %s\nSection: utils\nPriority: optional\nArchitecture: %s\nMaintainer: ClearLens Contributors <maintainers@clearlens.dev>\nDescription: Transparent cross-platform disk cleaner, BLAKE3 duplicate finder, and Space Lens CLI\n" "${VER}" "${ARCH}" > "${PKG_ROOT}/DEBIAN/control"; \
+  mkdir -p /pkg; \
+  dpkg-deb --build "${PKG_ROOT}" "/pkg/clearlens-cli_${VER}_${ARCH}.deb"; \
+  tar -czf "/pkg/clearlens-cli-${VER}-linux-${ARCH}.tar.gz" -C /app/target/release clens; \
+  (cd /pkg && sha256sum clearlens-cli_* clearlens-cli-* > SHA256SUMS); \
+  ls -lh /pkg \
+'
+
+FROM node:22-alpine AS web-packager
+WORKDIR /app/apps/desktop
+COPY apps/desktop/package.json ./
+COPY apps/desktop/tsconfig.json ./
+COPY apps/desktop/vite.config.ts ./
+COPY apps/desktop/index.html ./
+COPY apps/desktop/src ./src
+
+RUN npm install --no-audit --no-fund
+RUN npx tsc --noEmit
+RUN npx vitest run > /tmp/web_vitest_report.txt && cat /tmp/web_vitest_report.txt
+RUN npx vite build
+RUN mkdir -p /pkg && tar -czf /pkg/clearlens-desktop-web-0.1.0.tar.gz -C /app/apps/desktop dist
+
+# Clean runtime OS container with ZERO compiler or source code — installs ONLY the built .deb!
+FROM debian:bookworm-slim AS clean-install-verify
+COPY --from=rust-packager /pkg /pkg
+COPY --from=rust-packager /tmp/cargo_test_report.txt /reports/cargo_test_report.txt
+COPY --from=web-packager /pkg/clearlens-desktop-web-0.1.0.tar.gz /pkg/
+COPY --from=web-packager /tmp/web_vitest_report.txt /reports/web_vitest_report.txt
+COPY tests/docker_package_install_cleanup.sh /usr/local/bin/docker_package_install_cleanup.sh
+
+RUN bash -o pipefail -c '\
+  chmod +x /usr/local/bin/docker_package_install_cleanup.sh \
+  && dpkg -i /pkg/clearlens-cli_0.1.0_*.deb \
+  && /usr/local/bin/docker_package_install_cleanup.sh | tee /reports/pkg_install_cleanup_report.txt \
+'
+
+CMD ["sh", "-c", "cat /reports/pkg_install_cleanup_report.txt && echo '' && echo '--- VITEST SUMMARY ---' && cat /reports/web_vitest_report.txt && echo '' && echo '--- PACKAGED ARTIFACTS (/pkg) ---' && ls -lh /pkg"]

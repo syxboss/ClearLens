@@ -1,0 +1,59 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "ClearLens",
+  "version": "0.1.0",
+  "identifier": "dev.clearlens.app",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "ClearLens",
+        "width": 1180,
+        "height": 760,
+        "minWidth": 960,
+        "minHeight": 640,
+        "resizable": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: asset: http://asset.localhost; font-src 'self' data:; connect-src ipc: http://ipc.localhost"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "publisher": "ClearLens Contributors",
+    "copyright": "Copyright (c) 2026 ClearLens Contributors",
+    "category": "Utility",
+    "shortDescription": "Transparent cross-platform disk cleaner & Space Lens visualizer",
+    "longDescription": "ClearLens is an open-source, transparent disk cleaner, developer/AI cache optimizer, BLAKE3 duplicate finder, and Space Lens visualizer for Windows and macOS.",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "macOS": {
+      "minimumSystemVersion": "13.0",
+      "dmg": {
+        "windowSize": {
+          "width": 660,
+          "height": 400
+        }
+      }
+    },
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser",
+        "languages": ["SimpChinese", "English"],
+        "displayLanguageSelector": true
+      }
+    }
+  }
+}

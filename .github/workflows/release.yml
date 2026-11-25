@@ -1,0 +1,217 @@
+name: Build & Release Installers
+
+on:
+  push:
+    branches: [main]
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: "Target platform to build installers for"
+        required: true
+        default: "all"
+        type: choice
+        options:
+          - all
+          - macos
+          - windows
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-desktop:
+    name: Build Desktop Installer (${{ matrix.label }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: macos
+            label: "macOS Universal .dmg"
+            os: macos-latest
+            rust_targets: "aarch64-apple-darwin,x86_64-apple-darwin"
+            tauri_args: "--target universal-apple-darwin --bundles dmg"
+            artifact_name: "ClearLens-macOS-Universal-Installer"
+          - id: windows
+            label: "Windows x64 .msi + .exe"
+            os: windows-latest
+            rust_targets: "x86_64-pc-windows-msvc"
+            tauri_args: "--target x86_64-pc-windows-msvc --bundles msi,nsis"
+            artifact_name: "ClearLens-Windows-x64-Installer"
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.platform == 'all' || inputs.platform == matrix.id }}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust_targets }}
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install desktop frontend dependencies
+        working-directory: apps/desktop
+        run: npm install --no-audit --no-fund
+
+      - name: Build ClearLens installer bundle (macOS)
+        if: matrix.id == 'macos'
+        working-directory: apps/desktop
+        shell: bash
+        env:
+          # Optional Apple Developer signing & notarization secrets (falls back to clean ad-hoc signing when unset)
+          RAW_APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          RAW_APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          RAW_APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          RAW_APPLE_ID: ${{ secrets.APPLE_ID }}
+          RAW_APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          RAW_APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          set -euo pipefail
+          if [ -n "${RAW_APPLE_CERTIFICATE:-}" ]; then
+            export APPLE_CERTIFICATE="$RAW_APPLE_CERTIFICATE"
+            export APPLE_CERTIFICATE_PASSWORD="${RAW_APPLE_CERTIFICATE_PASSWORD:-}"
+            export APPLE_SIGNING_IDENTITY="${RAW_APPLE_SIGNING_IDENTITY:-}"
+            export APPLE_ID="${RAW_APPLE_ID:-}"
+            export APPLE_PASSWORD="${RAW_APPLE_PASSWORD:-}"
+            export APPLE_TEAM_ID="${RAW_APPLE_TEAM_ID:-}"
+          else
+            export APPLE_SIGNING_IDENTITY="-"
+          fi
+          npx tauri build ${{ matrix.tauri_args }}
+
+      - name: Build ClearLens installer bundle (Windows)
+        if: matrix.id == 'windows'
+        working-directory: apps/desktop
+        shell: pwsh
+        run: npx tauri build ${{ matrix.tauri_args }}
+
+      - name: Collect installer files (macOS)
+        if: matrix.id == 'macos'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist-installers
+          for root in target apps/desktop/src-tauri/target; do
+            if [ -d "$root" ]; then
+              find "$root" -type f -name "*.dmg" ! -name "rw.*.dmg" -exec cp {} dist-installers/ \;
+            fi
+          done
+          ls -lh dist-installers
+          test "$(ls -1 dist-installers/*.dmg | wc -l)" -ge 1
+
+      - name: Collect installer files (Windows)
+        if: matrix.id == 'windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist-installers | Out-Null
+          $files = @()
+          foreach ($root in @("target", "apps/desktop/src-tauri/target")) {
+            if (Test-Path $root) {
+              $files += Get-ChildItem -Path $root -Recurse -File -Include "*.msi","*-setup.exe" | Where-Object { $_.FullName -match "bundle" }
+            }
+          }
+          if ($files.Count -eq 0) {
+            throw "No Windows .msi or .exe installer bundles found!"
+          }
+          foreach ($f in $files) {
+            Copy-Item $f.FullName -Destination "dist-installers/"
+          }
+          Get-ChildItem dist-installers
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: dist-installers/*
+          if-no-files-found: error
+
+  build-cli:
+    name: Build CLI Binary (${{ matrix.label }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: macos
+            label: "macOS arm64"
+            os: macos-latest
+            target: aarch64-apple-darwin
+            archive: clens-macos-arm64.tar.gz
+          - id: macos
+            label: "macOS x64"
+            os: macos-latest
+            target: x86_64-apple-darwin
+            archive: clens-macos-x64.tar.gz
+          - id: windows
+            label: "Windows x64"
+            os: windows-latest
+            target: x86_64-pc-windows-msvc
+            archive: clens-windows-x64.zip
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.platform == 'all' || inputs.platform == matrix.id }}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: swatinem/rust-cache@v2
+
+      - name: Build clens release binary
+        run: cargo build --release -p clearlens-cli --target ${{ matrix.target }}
+
+      - name: Package CLI archive (macOS)
+        if: matrix.id == 'macos'
+        shell: bash
+        run: |
+          mkdir -p dist-cli
+          tar -czf "dist-cli/${{ matrix.archive }}" -C "target/${{ matrix.target }}/release" clens
+
+      - name: Package CLI archive (Windows)
+        if: matrix.id == 'windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist-cli | Out-Null
+          Compress-Archive -Path "target/${{ matrix.target }}/release/clens.exe" -DestinationPath "dist-cli/${{ matrix.archive }}" -Force
+
+      - name: Upload CLI artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cli-${{ matrix.target }}
+          path: dist-cli/${{ matrix.archive }}
+          if-no-files-found: error
+
+  publish-release:
+    name: Publish GitHub Release
+    needs: [build-desktop, build-cli]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all built installers and CLI archives
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: Generate SHA256SUMS.txt
+        working-directory: release-assets
+        run: |
+          sha256sum * > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - name: Create GitHub Release with Win & macOS installers
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-assets/*
+          generate_release_notes: true
+          draft: false

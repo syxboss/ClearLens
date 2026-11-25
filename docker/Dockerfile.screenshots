@@ -1,0 +1,64 @@
+# Renders real bilingual ClearLens UI screenshots & real clens CLI terminal SVG inside Docker.
+
+FROM rust:slim-bookworm AS cli-demo
+WORKDIR /app
+COPY Cargo.toml ./
+COPY rules ./rules
+COPY crates ./crates
+COPY apps/desktop/src-tauri ./apps/desktop/src-tauri
+
+RUN cargo build --release -p clearlens-cli
+RUN bash -c '\
+  set -euo pipefail; \
+  CLENS=/app/target/release/clens; \
+  export HOME=/tmp/demo_mac; \
+  mkdir -p "$HOME/Library/Caches/Google/Chrome/Default/Cache" \
+           "$HOME/Library/Containers/com.tencent.xinWeChat/Data/Library/Caches" \
+           "$HOME/Projects/legacy-dashboard/node_modules/lodash" \
+           "$HOME/Projects/rust-wasm-demo/target/release" \
+           "$HOME/Downloads"; \
+  dd if=/dev/zero of="$HOME/Library/Caches/Google/Chrome/Default/Cache/data_0" bs=1024 count=512 status=none; \
+  dd if=/dev/zero of="$HOME/Library/Containers/com.tencent.xinWeChat/Data/Library/Caches/thumb.bin" bs=1024 count=256 status=none; \
+  touch -d "10 days ago" "$HOME/Library/Containers/com.tencent.xinWeChat/Data/Library/Caches/thumb.bin"; \
+  echo "{}" > "$HOME/Projects/legacy-dashboard/package.json"; \
+  dd if=/dev/zero of="$HOME/Projects/legacy-dashboard/node_modules/lodash/index.js" bs=1024 count=768 status=none; \
+  touch -d "45 days ago" "$HOME/Projects/legacy-dashboard/package.json" "$HOME/Projects/legacy-dashboard"; \
+  echo "[package]" > "$HOME/Projects/rust-wasm-demo/Cargo.toml"; \
+  dd if=/dev/zero of="$HOME/Projects/rust-wasm-demo/target/release/app.rlib" bs=1024 count=1024 status=none; \
+  touch -d "60 days ago" "$HOME/Projects/rust-wasm-demo/Cargo.toml" "$HOME/Projects/rust-wasm-demo"; \
+  dd if=/dev/zero of="$HOME/Downloads/OldInstaller.dmg" bs=1024 count=640 status=none; \
+  touch -d "90 days ago" "$HOME/Downloads/OldInstaller.dmg"; \
+  { \
+    echo "$ clens rules validate"; \
+    "$CLENS" rules validate; \
+    echo ""; \
+    echo "$ clens scan --mode all --simulate-os macos"; \
+    "$CLENS" scan --mode all --simulate-os macos; \
+  } > /tmp/cli_demo_output.txt \
+'
+
+FROM node:22-alpine AS ui-capture
+RUN apk add --no-cache \
+  chromium \
+  nss \
+  freetype \
+  harfbuzz \
+  ca-certificates \
+  font-noto \
+  font-noto-cjk
+
+WORKDIR /app/apps/desktop
+COPY apps/desktop/package.json ./
+COPY apps/desktop/tsconfig.json ./
+COPY apps/desktop/vite.config.ts ./
+COPY apps/desktop/index.html ./
+COPY apps/desktop/src ./src
+COPY scripts/capture_screenshots.mjs ./capture_screenshots.mjs
+COPY --from=cli-demo /tmp/cli_demo_output.txt /tmp/cli_demo_output.txt
+
+RUN npm install --no-audit --no-fund && npx vite build
+RUN npm install --no-save --no-audit --no-fund puppeteer-core
+RUN node ./capture_screenshots.mjs
+
+FROM alpine:3.20 AS export
+COPY --from=ui-capture /out /out

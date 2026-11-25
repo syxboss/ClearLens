@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  rust-core-and-cli:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: swatinem/rust-cache@v2
+      - name: Run core & CLI tests
+        run: cargo test -p clearlens-core -p clearlens-cli
+      - name: Validate all TOML rule packs
+        run: cargo run -p clearlens-cli -- rules validate
+
+  frontend-verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/desktop
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm install --no-audit --no-fund
+      - run: npx tsc --noEmit
+      - run: npx vitest run
+      - run: npx vite build
+
+  docker-e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run isolated Docker test & .deb install verification
+        run: |
+          docker build -f docker/Dockerfile.test -t clearlens-test:ci .
+          docker run --rm clearlens-test:ci
+          docker build -f docker/Dockerfile.package-install -t clearlens-pkg-test:ci .
+          docker run --rm clearlens-pkg-test:ci

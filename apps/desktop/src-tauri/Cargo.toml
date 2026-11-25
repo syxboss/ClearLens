@@ -1,0 +1,25 @@
+[package]
+name = "clearlens-desktop"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Tauri v2 desktop application backend for ClearLens"
+
+[lib]
+name = "clearlens_desktop_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[features]
+default = ["mimalloc"]
+mimalloc = ["dep:mimalloc"]
+
+[dependencies]
+clearlens-core = { path = "../../../crates/clearlens-core" }
+tauri = { version = "2", features = [] }
+serde.workspace = true
+serde_json.workspace = true
+mimalloc = { workspace = true, optional = true }

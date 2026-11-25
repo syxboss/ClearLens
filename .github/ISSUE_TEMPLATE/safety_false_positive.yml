@@ -1,0 +1,25 @@
+name: Safety False-Positive Report
+description: Report any rule that matched non-cache or user-critical files
+labels: ["safety", "priority-high"]
+body:
+  - type: input
+    id: rule_id
+    attributes:
+      label: Rule ID
+      placeholder: "e.g., wechat.cache.thumbnails_and_temp"
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Platform
+      placeholder: "macOS 15 / Windows 11"
+    validations:
+      required: true
+  - type: textarea
+    id: path_pattern
+    attributes:
+      label: Affected Path Structure (replace personal username with ~)
+      placeholder: "~/Documents/..."
+    validations:
+      required: true

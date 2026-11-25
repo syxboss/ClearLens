@@ -1,0 +1,11 @@
+{
+  "name": "clearlens-monorepo",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev:desktop": "pnpm --dir apps/desktop tauri dev",
+    "build:desktop": "pnpm --dir apps/desktop tauri build",
+    "test:docker": "docker build -f docker/Dockerfile.test -t clearlens-test:v0.1 . && docker run --rm clearlens-test:v0.1",
+    "test:docker-pkg": "docker build -f docker/Dockerfile.package-install -t clearlens-pkg-test:v0.1 . && docker run --rm clearlens-pkg-test:v0.1"
+  }
+}

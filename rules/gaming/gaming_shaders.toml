@@ -1,0 +1,70 @@
+schema_version = 1
+category = "gaming"
+app_name = "Gaming Platforms & GPU Shaders"
+app_name_zh = "游戏平台与显卡着色器缓存"
+process_names_win = ["steam.exe", "EpicGamesLauncher.exe"]
+process_names_mac = ["steam_osx", "EpicGamesLauncher"]
+
+[[rules]]
+id = "gaming.steam.cache"
+title = "Steam Depot, HTTP & Shader Caches"
+title_zh = "Steam 下载残留与着色器缓存"
+kind = "glob"
+risk = "recreatable"
+default_checked = true
+delete_mode = "permanent"
+min_age_days = 7
+impact_note = "Removes Steam web browser caches, crash dumps, and stale depot staging caches."
+impact_note_zh = "清理 Steam 网页缓存、崩溃转储与旧版 depot 下载残留，不影响已安装游戏。"
+
+[rules.paths]
+macos = [
+  "~/Library/Application Support/Steam/appcache/httpcache/**",
+  "~/Library/Application Support/Steam/steamapps/shadercache/**",
+  "~/Library/Application Support/Steam/dumps/**",
+]
+windows = [
+  "%PROGRAMFILES(X86)%/Steam/appcache/httpcache/**",
+  "%PROGRAMFILES(X86)%/Steam/steamapps/shadercache/**",
+  "%PROGRAMFILES(X86)%/Steam/dumps/**",
+  "%LOCALAPPDATA%/Steam/htmlcache/**",
+]
+
+[[rules]]
+id = "gaming.epic.cache"
+title = "Epic Games Launcher Web Cache"
+title_zh = "Epic 游戏平台网页缓存"
+kind = "glob"
+risk = "safe"
+default_checked = true
+delete_mode = "permanent"
+impact_note = "Clears Epic Launcher web caches."
+impact_note_zh = "清理 Epic 启动器网页资源缓存。"
+
+[rules.paths]
+macos = ["~/Library/Caches/com.epicgames.EpicGamesLauncher/**"]
+windows = ["%LOCALAPPDATA%/EpicGamesLauncher/Saved/webcache*/**"]
+
+[[rules]]
+id = "gaming.gpu.shaders"
+title = "DirectX, NVIDIA & AMD Shader Caches"
+title_zh = "DirectX / NVIDIA / AMD 显卡着色器缓存"
+kind = "glob"
+risk = "recreatable"
+default_checked = true
+delete_mode = "permanent"
+min_age_days = 14
+impact_note = "Clears stale compiled GPU shader caches; games recompile shaders on next launch."
+impact_note_zh = "清理超过 14 天的显卡着色器缓存，解决驱动更新后冗余堆积。"
+
+[rules.paths]
+windows = [
+  "%LOCALAPPDATA%/D3DSCache/**",
+  "%LOCALAPPDATA%/NVIDIA/DXCache/**",
+  "%LOCALAPPDATA%/NVIDIA/GLCache/**",
+  "%LOCALAPPDATA%/AMD/DxCache/**",
+]
+linux = [
+  "~/.cache/mesa_shader_cache/**",
+  "~/.cache/nvidia/GLCache/**",
+]

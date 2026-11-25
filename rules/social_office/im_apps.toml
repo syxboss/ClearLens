@@ -1,0 +1,199 @@
+schema_version = 1
+category = "social_office"
+app_name = "Social & Office IM Apps"
+app_name_zh = "国民社交与办公软件"
+process_names_win = ["WeChat.exe", "Weixin.exe", "WXWork.exe", "Feishu.exe", "DingTalk.exe", "QQ.exe", "Telegram.exe", "Discord.exe"]
+process_names_mac = ["WeChat", "企业微信", "Feishu", "DingTalk", "QQ", "Telegram", "Slack", "Discord"]
+
+[[rules]]
+id = "wechat.cache.thumbnails_and_temp"
+title = "WeChat Temporary & Thumbnail Cache"
+title_zh = "微信缩略图与临时运行缓存"
+kind = "glob"
+risk = "safe"
+default_checked = true
+delete_mode = "permanent"
+min_age_days = 3
+impact_note = "Removes thumbnail & temp caches; strictly preserves chat databases and received documents."
+impact_note_zh = "仅清理图片预览缩略图与临时运行缓存，严格排除聊天数据库与个人接收文档。"
+
+[rules.paths]
+macos = [
+  "~/Library/Containers/com.tencent.xinWeChat/Data/Library/Caches/**",
+  "~/Library/Containers/com.tencent.xinWeChat/Data/Library/Application Support/com.tencent.xinWeChat/*/*/Message/MessageTemp/*/Thumb/**",
+]
+windows = [
+  "%USERPROFILE%/Documents/WeChat Files/*/FileStorage/Cache/**",
+  "%APPDATA%/Tencent/WeChat/XPlugin/Plugins/**/temp/**",
+]
+
+[rules.exclude]
+patterns = [
+  "**/FileStorage/File/**",
+  "**/FileStorage/MsgAttach/**",
+  "**/*.db",
+  "**/*.sqlite*",
+]
+
+[[rules]]
+id = "wechat.cache.auto_videos"
+title = "WeChat Auto-Cached Videos (>30d)"
+title_zh = "微信超 30 天自动缓存视频"
+kind = "glob"
+risk = "review_required"
+default_checked = false
+delete_mode = "trash"
+min_age_days = 30
+impact_note = "Moves auto-cached chat videos older than 30 days to OS Trash (never removes FileStorage/File)."
+impact_note_zh = "将 30 天前自动缓存的群聊视频移入回收站/废纸篓（个人文档已严格排除）。"
+
+[rules.paths]
+macos = [
+  "~/Library/Containers/com.tencent.xinWeChat/Data/Library/Application Support/com.tencent.xinWeChat/*/*/Message/MessageTemp/*/Video/**",
+]
+windows = [
+  "%USERPROFILE%/Documents/WeChat Files/*/FileStorage/Video/**",
+]
+
+[rules.exclude]
+patterns = ["**/FileStorage/File/**", "**/FileStorage/MsgAttach/**"]
+
+[[rules]]
+id = "wecom.cache.temp"
+title = "WeCom (Enterprise WeChat) Cache"
+title_zh = "企业微信临时与图片缩略图缓存"
+kind = "glob"
+risk = "safe"
+default_checked = true
+delete_mode = "permanent"
+min_age_days = 7
+impact_note = "Clears WeCom temp and thumbnail caches without touching work documents."
+impact_note_zh = "清理企业微信临时缓存，保留所有工作接收文件与聊天数据库。"
+
+[rules.paths]
+macos = [
+  "~/Library/Containers/com.tencent.WeWorkMac/Data/Library/Caches/**",
+]
+windows = [
+  "%USERPROFILE%/Documents/WXWork/*/Cache/**",
+  "%APPDATA%/Tencent/WXWork/Temp/**",
+]
+
+[rules.exclude]
+patterns = ["**/File/**", "**/*.db"]
+
+[[rules]]
+id = "feishu.cache.web_and_media"
+title = "Feishu / Lark Cache"
+title_zh = "飞书（Feishu / Lark）运行与媒体缓存"
+kind = "glob"
+risk = "safe"
+default_checked = true
+delete_mode = "permanent"
+min_age_days = 7
+impact_note = "Clears Feishu Electron/Chromium caches and old logs."
+impact_note_zh = "清理飞书桌面端网页缓存、GPU 缓存与历史日志。"
+
+[rules.paths]
+macos = [
+  "~/Library/Caches/com.bytedance.feishu/**",
+  "~/Library/Application Support/LarkShell/Cache/**",
+  "~/Library/Application Support/LarkShell/GPUCache/**",
+]
+windows = [
+  "%LOCALAPPDATA%/Feishu/Cache/**",
+  "%APPDATA%/LarkShell/Cache/**",
+  "%APPDATA%/LarkShell/GPUCache/**",
+]
+
+[[rules]]
+id = "dingtalk.cache.temp"
+title = "DingTalk Cache & Logs"
+title_zh = "钉钉运行缓存与日志"
+kind = "glob"
+risk = "safe"
+default_checked = true
+delete_mode = "permanent"
+min_age_days = 7
+impact_note = "Clears DingTalk temporary caches and logs."
+impact_note_zh = "清理钉钉临时运行缓存与日志文件。"
+
+[rules.paths]
+macos = [
+  "~/Library/Caches/com.alibaba.DingTalkMac/**",
+]
+windows = [
+  "%APPDATA%/DingTalk/*/Cache/**",
+  "%LOCALAPPDATA%/DingTalk/Cache/**",
+]
+
+[[rules]]
+id = "qq.cache.temp"
+title = "QQ / NTQQ Image & Temp Cache"
+title_zh = "QQ / NTQQ 图片与临时缓存"
+kind = "glob"
+risk = "safe"
+default_checked = true
+delete_mode = "permanent"
+min_age_days = 7
+impact_note = "Clears NTQQ temporary image & video caches while preserving FileRecv."
+impact_note_zh = "清理 QQ / NTQQ 临时缓存，保留 FileRecv 个人接收文件。"
+
+[rules.paths]
+macos = [
+  "~/Library/Containers/com.tencent.qq/Data/Library/Caches/**",
+]
+windows = [
+  "%USERPROFILE%/Documents/Tencent Files/*/Image/C2C/**",
+  "%APPDATA%/Tencent/QQ/Temp/**",
+]
+
+[rules.exclude]
+patterns = ["**/FileRecv/**", "**/*.db"]
+
+[[rules]]
+id = "telegram.cache.media"
+title = "Telegram Desktop Media Cache"
+title_zh = "Telegram 媒体自动缓存"
+kind = "glob"
+risk = "recreatable"
+default_checked = true
+delete_mode = "permanent"
+min_age_days = 14
+impact_note = "Telegram cloud-synced media will re-download automatically on scroll."
+impact_note_zh = "清理 Telegram 云端同步的本地媒体缓存，需要时自动重新加载。"
+
+[rules.paths]
+macos = [
+  "~/Library/Group Containers/*.ru.keepcoder.Telegram/appstore/account-*/postbox/media/**",
+  "~/Library/Caches/ru.keepcoder.Telegram/**",
+]
+windows = [
+  "%APPDATA%/Telegram Desktop/tdata/user_data/cache/**",
+  "%APPDATA%/Telegram Desktop/tdata/user_data/media_cache/**",
+]
+
+[[rules]]
+id = "slack_discord.cache"
+title = "Slack & Discord Client Caches"
+title_zh = "Slack 与 Discord 客户端缓存"
+kind = "glob"
+risk = "safe"
+default_checked = true
+delete_mode = "permanent"
+impact_note = "Clears Electron media and code caches while keeping account sessions."
+impact_note_zh = "清理 Slack 与 Discord 的媒体及网页资源缓存，不影响登录状态。"
+
+[rules.paths]
+macos = [
+  "~/Library/Application Support/Slack/Cache/**",
+  "~/Library/Application Support/Slack/Code Cache/**",
+  "~/Library/Application Support/discord/Cache/**",
+  "~/Library/Application Support/discord/Code Cache/**",
+]
+windows = [
+  "%APPDATA%/Slack/Cache/**",
+  "%APPDATA%/Slack/Code Cache/**",
+  "%APPDATA%/discord/Cache/**",
+  "%APPDATA%/discord/Code Cache/**",
+]

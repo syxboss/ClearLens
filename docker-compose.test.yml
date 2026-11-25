@@ -1,0 +1,21 @@
+services:
+  rust-test:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.test
+      target: rust-verify
+  web-test:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.test
+      target: web-verify
+  all-tests:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.test
+      target: summary
+  package-install-test:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.package-install
+      target: clean-install-verify
