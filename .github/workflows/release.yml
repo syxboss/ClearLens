@@ -24,25 +24,50 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  plan:
+    name: Plan build matrix
+    runs-on: ubuntu-latest
+    outputs:
+      desktop: ${{ steps.m.outputs.desktop }}
+      cli: ${{ steps.m.outputs.cli }}
+    steps:
+      - id: m
+        shell: bash
+        env:
+          PLATFORM: ${{ github.event_name == 'workflow_dispatch' && inputs.platform || 'all' }}
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, os
+          p = os.environ["PLATFORM"]
+          desktop = [
+              {"id": "macos", "label": "macOS Universal .dmg", "os": "macos-latest",
+               "rust_targets": "aarch64-apple-darwin,x86_64-apple-darwin",
+               "tauri_args": "--target universal-apple-darwin --bundles dmg",
+               "artifact_name": "ClearLens-macOS-Universal-Installer"},
+              {"id": "windows", "label": "Windows x64 .msi + .exe", "os": "windows-latest",
+               "rust_targets": "x86_64-pc-windows-msvc",
+               "tauri_args": "--target x86_64-pc-windows-msvc --bundles msi,nsis",
+               "artifact_name": "ClearLens-Windows-x64-Installer"},
+          ]
+          cli = [
+              {"id": "macos", "label": "macOS arm64", "os": "macos-latest",
+               "target": "aarch64-apple-darwin", "archive": "clens-macos-arm64.tar.gz"},
+              {"id": "macos", "label": "macOS x64", "os": "macos-latest",
+               "target": "x86_64-apple-darwin", "archive": "clens-macos-x64.tar.gz"},
+              {"id": "windows", "label": "Windows x64", "os": "windows-latest",
+               "target": "x86_64-pc-windows-msvc", "archive": "clens-windows-x64.zip"},
+          ]
+          keep = lambda xs: [x for x in xs if p == "all" or x["id"] == p]
+          print("desktop=" + json.dumps({"include": keep(desktop)}))
+          print("cli=" + json.dumps({"include": keep(cli)}))
+          PY
+
   build-desktop:
     name: Build Desktop Installer (${{ matrix.label }})
+    needs: plan
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - id: macos
-            label: "macOS Universal .dmg"
-            os: macos-latest
-            rust_targets: "aarch64-apple-darwin,x86_64-apple-darwin"
-            tauri_args: "--target universal-apple-darwin --bundles dmg"
-            artifact_name: "ClearLens-macOS-Universal-Installer"
-          - id: windows
-            label: "Windows x64 .msi + .exe"
-            os: windows-latest
-            rust_targets: "x86_64-pc-windows-msvc"
-            tauri_args: "--target x86_64-pc-windows-msvc --bundles msi,nsis"
-            artifact_name: "ClearLens-Windows-x64-Installer"
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.platform == 'all' || inputs.platform == matrix.id }}
+      matrix: ${{ fromJSON(needs.plan.outputs.desktop) }}
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
@@ -139,26 +164,10 @@ jobs:
 
   build-cli:
     name: Build CLI Binary (${{ matrix.label }})
+    needs: plan
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - id: macos
-            label: "macOS arm64"
-            os: macos-latest
-            target: aarch64-apple-darwin
-            archive: clens-macos-arm64.tar.gz
-          - id: macos
-            label: "macOS x64"
-            os: macos-latest
-            target: x86_64-apple-darwin
-            archive: clens-macos-x64.tar.gz
-          - id: windows
-            label: "Windows x64"
-            os: windows-latest
-            target: x86_64-pc-windows-msvc
-            archive: clens-windows-x64.zip
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.platform == 'all' || inputs.platform == matrix.id }}
+      matrix: ${{ fromJSON(needs.plan.outputs.cli) }}
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
