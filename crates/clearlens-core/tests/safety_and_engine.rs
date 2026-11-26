@@ -22,6 +22,9 @@ fn lock_env() -> std::sync::MutexGuard<'static, ()> {
 
 fn setup_isolated_home(dir: &std::path::Path) {
     std::env::set_var("HOME", dir);
+    std::env::set_var("USERPROFILE", dir);
+    std::env::set_var("LOCALAPPDATA", dir.join("AppData/Local"));
+    std::env::set_var("APPDATA", dir.join("AppData/Roaming"));
     let xdg = dir.join(".local/share");
     std::env::set_var("XDG_DATA_HOME", &xdg);
     std::env::set_var("CLEARLENS_TRASH_DIR", xdg.join("Trash"));
@@ -29,6 +32,7 @@ fn setup_isolated_home(dir: &std::path::Path) {
 
 #[test]
 fn embedded_rule_pack_loads_and_validates_over_25_rules() {
+    let _g = lock_env();
     let files = load_all_rules().expect("embedded TOML rules should parse and validate");
     let total_rules: usize = files.iter().map(|f| f.rules.len()).sum();
     assert!(
@@ -41,7 +45,7 @@ fn embedded_rule_pack_loads_and_validates_over_25_rules() {
 fn blocklist_rejects_sensitive_and_user_asset_paths() {
     let _g = lock_env();
     let dir = tempdir().unwrap();
-    std::env::set_var("HOME", dir.path());
+    setup_isolated_home(dir.path());
 
     assert!(ProtectedBlocklist::check_path(&dir.path().join(".ssh/id_ed25519")).is_err());
     assert!(ProtectedBlocklist::check_path(&dir.path().join("Library/Keychains/login.keychain-db")).is_err());
@@ -65,7 +69,7 @@ fn blocklist_rejects_sensitive_and_user_asset_paths() {
 fn symlink_trap_never_counts_or_deletes_external_target() {
     let _g = lock_env();
     let dir = tempdir().unwrap();
-    std::env::set_var("HOME", dir.path());
+    setup_isolated_home(dir.path());
 
     let precious_dir = dir.path().join("PreciousExternal");
     fs::create_dir_all(&precious_dir).unwrap();
@@ -120,7 +124,9 @@ fn hardlinks_are_deduplicated_during_physical_accounting() {
 
 #[test]
 fn icloud_stub_placeholders_are_skipped_by_space_lens() {
+    let _g = lock_env();
     let dir = tempdir().unwrap();
+    setup_isolated_home(dir.path());
     fs::write(dir.path().join("real.bin"), vec![b'R'; 16_384]).unwrap();
     fs::write(dir.path().join(".BigVideo.mov.icloud"), vec![b'C'; 8192]).unwrap();
 
@@ -243,7 +249,7 @@ fn cold_project_scanner_only_flags_stale_projects_and_respects_dry_run_and_audit
 fn blocklist_blocks_dotdot_traversal_windows_prefixes_and_ancestor_symlinks() {
     let _g = lock_env();
     let dir = tempdir().unwrap();
-    std::env::set_var("HOME", dir.path());
+    setup_isolated_home(dir.path());
 
     let desktop = dir.path().join("Desktop");
     let caches = dir.path().join("Library/Caches");
@@ -289,7 +295,7 @@ fn blocklist_blocks_dotdot_traversal_windows_prefixes_and_ancestor_symlinks() {
 fn glob_anchor_preserves_container_root_and_enforces_clean_time_toctou() {
     let _g = lock_env();
     let dir = tempdir().unwrap();
-    std::env::set_var("HOME", dir.path());
+    setup_isolated_home(dir.path());
 
     // `system.user_logs` targets `~/Library/Logs/**` with `min_age_days = 7`
     let logs_root = dir.path().join("Library/Logs");
@@ -345,7 +351,7 @@ fn glob_anchor_preserves_container_root_and_enforces_clean_time_toctou() {
 fn verbatim_windows_paths_secondary_drives_and_unsafe_custom_rules_blocked() {
     let _g = lock_env();
     let dir = tempdir().unwrap();
-    std::env::set_var("HOME", dir.path());
+    setup_isolated_home(dir.path());
 
     // 1. Windows \\?\ verbatim paths & secondary drive roots MUST still trigger ProtectedBlocklist
     assert!(ProtectedBlocklist::check_path(std::path::Path::new(

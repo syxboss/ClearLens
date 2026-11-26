@@ -22,6 +22,9 @@ fn lock_test_env() -> std::sync::MutexGuard<'static, ()> {
 
 fn setup_isolated_home(dir: &std::path::Path) -> std::path::PathBuf {
     std::env::set_var("HOME", dir);
+    std::env::set_var("USERPROFILE", dir);
+    std::env::set_var("LOCALAPPDATA", dir.join("AppData/Local"));
+    std::env::set_var("APPDATA", dir.join("AppData/Roaming"));
     let xdg = dir.join(".local/share");
     std::env::set_var("XDG_DATA_HOME", &xdg);
     std::env::set_var("CLEARLENS_TRASH_DIR", xdg.join("Trash"));
@@ -334,6 +337,26 @@ fn vdisk_macos_sparse_docker_raw_distinguishes_physical_vs_logical() {
         let mut f = fs::File::create(&docker_raw).unwrap();
         f.write_all(&vec![0xABu8; 65_536]).unwrap();
         f.set_len(16 * 1024 * 1024).unwrap();
+        #[cfg(target_os = "macos")]
+        {
+            use std::os::unix::io::AsRawFd;
+            #[repr(C)]
+            struct Fpunchhole {
+                fp_flags: u32,
+                reserved: u32,
+                fp_offset: i64,
+                fp_length: i64,
+            }
+            const F_PUNCHHOLE: libc::c_int = 99;
+            let mut hole = Fpunchhole {
+                fp_flags: 0,
+                reserved: 0,
+                fp_offset: 65_536,
+                fp_length: (16 * 1024 * 1024) - 65_536,
+            };
+            let rc = unsafe { libc::fcntl(f.as_raw_fd(), F_PUNCHHOLE, &mut hole) };
+            assert_eq!(rc, 0, "APFS F_PUNCHHOLE should punch sparse range on macOS");
+        }
         f.sync_all().unwrap();
     }
 
@@ -419,7 +442,6 @@ fn code_review_regressions_ollama_traversal_trash_collisions_tilde_and_ps_quotin
     }
     let tr_res = execute_clean(&same_name_reqs, false);
     assert_eq!(tr_res.succeeded_count, 4);
-    #[cfg(all(unix, not(target_os = "macos")))]
     {
         let trashed_count = fs::read_dir(xdg.join("Trash/files"))
             .unwrap()
@@ -474,6 +496,7 @@ fn pass3_elevated_scope_ollama_spoof_duplicate_toctou_and_uninstaller_scope() {
     let outside_elev = dir.path().join("Outside/secret.dat");
     fs::create_dir_all(outside_elev.parent().unwrap()).unwrap();
     fs::write(&outside_elev, b"KEEP").unwrap();
+    let prev_windir = std::env::var_os("WINDIR");
     std::env::set_var("WINDIR", &fake_windir);
 
     let non_elev_rule = ElevationRequest {
@@ -527,7 +550,10 @@ fn pass3_elevated_scope_ollama_spoof_duplicate_toctou_and_uninstaller_scope() {
         },
     };
     assert!(execute_elevation_request(&in_scope_elev).success);
-    std::env::remove_var("WINDIR");
+    match prev_windir {
+        Some(v) => std::env::set_var("WINDIR", v),
+        None => std::env::remove_var("WINDIR"),
+    }
 
     // Symbolic link protection on elevated worker file transport
     #[cfg(unix)]

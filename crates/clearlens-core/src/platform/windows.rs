@@ -28,7 +28,8 @@ pub fn inspect_path_meta_windows(path: &Path) -> std::io::Result<FilePhysicalMet
     let is_reparse = meta.file_type().is_symlink() || (attrs & FILE_ATTRIBUTE_REPARSE_POINT) != 0;
     let is_cloud = (attrs
         & (FILE_ATTRIBUTE_OFFLINE | FILE_ATTRIBUTE_RECALL_ON_OPEN | FILE_ATTRIBUTE_RECALL_ON_DATA_ACCESS))
-        != 0;
+        != 0
+        || super::is_icloud_stub_name(path);
     let is_dir = !is_reparse && meta.is_dir();
 
     let logical = meta.file_size();
