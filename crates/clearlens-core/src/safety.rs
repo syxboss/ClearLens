@@ -687,9 +687,13 @@ pub struct ProcessMonitor {
 
 impl ProcessMonitor {
     pub fn snapshot() -> Self {
-        let mut sys = System::new_with_specifics(
+        let Ok(mut sys) = System::new_with_specifics(
             RefreshKind::nothing().with_processes(ProcessRefreshKind::nothing()),
-        );
+        ) else {
+            return Self {
+                running_names: FxHashSet::default(),
+            };
+        };
         sys.refresh_processes(sysinfo::ProcessesToUpdate::All, true);
         let running_names = sys
             .processes()

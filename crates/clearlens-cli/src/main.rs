@@ -278,7 +278,7 @@ fn run(cli: Cli) -> Result<(), String> {
                 println!("{}", serde_json::to_string_pretty(&report).unwrap());
             } else {
                 let mut table = Table::new();
-                table.load_preset(UTF8_FULL);
+                table.load_style(UTF8_FULL);
                 table.set_header(vec!["Risk", "Rule ID", "Size", "Files", "Target Path"]);
 
                 let show_all = mode == "all";
@@ -417,7 +417,7 @@ fn run(cli: Cli) -> Result<(), String> {
                     report.duration_ms
                 );
                 let mut table = Table::new();
-                table.load_preset(UTF8_FULL);
+                table.load_style(UTF8_FULL);
                 table.set_header(vec!["Name", "Type", "Physical Size", "Files"]);
                 for ch in report.root.children.iter().take(20) {
                     table.add_row(vec![
@@ -520,7 +520,7 @@ fn run(cli: Cli) -> Result<(), String> {
                 println!("{}", serde_json::to_string_pretty(&report).unwrap());
             } else {
                 let mut table = Table::new();
-                table.load_preset(UTF8_FULL);
+                table.load_style(UTF8_FULL);
                 table.set_header(vec!["App Name", "Bundle ID", "App Size", "Residue Size", "Residues"]);
                 for app in &report.apps {
                     table.add_row(vec![
@@ -552,7 +552,7 @@ fn run(cli: Cli) -> Result<(), String> {
                 println!("{}", serde_json::to_string_pretty(&report).unwrap());
             } else {
                 let mut table = Table::new();
-                table.load_preset(UTF8_FULL);
+                table.load_style(UTF8_FULL);
                 table.set_header(vec!["Orphan Name", "Location", "Inactive", "Size", "Path"]);
                 for o in &report.orphans {
                     table.add_row(vec![
@@ -584,7 +584,7 @@ fn run(cli: Cli) -> Result<(), String> {
                 println!("No WSL2 / Docker / OrbStack / Lima virtual disks detected.");
             } else {
                 let mut table = Table::new();
-                table.load_preset(UTF8_FULL);
+                table.load_style(UTF8_FULL);
                 table.set_header(vec![
                     "Virtual Disk",
                     "Physical SSD",
@@ -642,7 +642,7 @@ fn run(cli: Cli) -> Result<(), String> {
             RulesAction::List => {
                 let files = load_all_rules()?;
                 let mut table = Table::new();
-                table.load_preset(UTF8_FULL);
+                table.load_style(UTF8_FULL);
                 table.set_header(vec!["Category", "Rule ID", "Risk", "Mode", "Title"]);
                 for rf in files {
                     for r in rf.rules {

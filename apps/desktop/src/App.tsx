@@ -10,8 +10,8 @@ import {
   isTauriRuntime,
 } from "./api/bridge";
 import {
-  AlertTriangle,
-  CheckCircle2,
+  CircleCheck,
+  CircleX,
   ChevronRight,
   Copy,
   Eye,
@@ -29,8 +29,8 @@ import {
   Sparkles,
   Sun,
   Trash2,
+  TriangleAlert,
   X,
-  XCircle,
 } from "lucide-react";
 import { TreemapCanvas } from "./components/TreemapCanvas";
 import { MESSAGES, type Locale, type MessageKey } from "./i18n";
@@ -659,7 +659,7 @@ export function App() {
         {overview && !overview.fda_granted && (
           <div className="mb-4 flex items-center justify-between rounded-xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm dark:border-amber-500/30 dark:bg-amber-500/10">
             <div className="flex items-center gap-3">
-              <AlertTriangle className="h-5 w-5 shrink-0 text-amber-500" />
+              <TriangleAlert className="h-5 w-5 shrink-0 text-amber-500" />
               <div>
                 <div className="font-semibold text-amber-900 dark:text-amber-200">
                   {t("fdaTitle")}
@@ -681,7 +681,7 @@ export function App() {
         {errorBanner && (
           <div className="mb-4 flex items-center justify-between rounded-xl border border-rose-300 bg-rose-50 px-4 py-3 text-sm text-rose-900 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200">
             <div className="flex items-center gap-2 font-medium">
-              <AlertTriangle className="h-4 w-4 shrink-0 text-rose-500" />
+              <TriangleAlert className="h-4 w-4 shrink-0 text-rose-500" />
               <span className="break-all">{errorBanner}</span>
             </div>
             <button onClick={() => setErrorBanner(null)} className="opacity-70 hover:opacity-100">
@@ -699,7 +699,7 @@ export function App() {
             }`}
           >
             <div className="flex items-center gap-2 font-medium">
-              <CheckCircle2 className="h-4 w-4" />
+              <CircleCheck className="h-4 w-4" />
               {cleanResult.dry_run ? t("dryRunBanner") : t("cleanDoneBanner")}:{" "}
               <strong>{formatBytes(cleanResult.total_freed_bytes)}</strong> (
               {cleanResult.succeeded_count} items)
@@ -745,7 +745,7 @@ export function App() {
                     onClick={handleCancelScan}
                     className="flex items-center gap-2 rounded-xl bg-rose-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-rose-600"
                   >
-                    <XCircle className="h-4 w-4" />
+                    <CircleX className="h-4 w-4" />
                     {t("cancel")}
                   </button>
                 ) : (
