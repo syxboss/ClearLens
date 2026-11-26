@@ -26,7 +26,6 @@ import {
   Plus,
   RefreshCw,
   ShieldCheck,
-  Sparkles,
   Sun,
   Trash2,
   TriangleAlert,
@@ -541,9 +540,32 @@ export function App() {
       <aside className="flex w-64 shrink-0 flex-col justify-between border-r border-slate-200 bg-white/90 p-4 dark:border-slate-800 dark:bg-slate-900/80">
         <div>
           <div className="flex items-center gap-2.5 px-2 py-1">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-teal-500 text-white shadow-sm">
-              <Sparkles className="h-5 w-5" />
-            </div>
+            <svg
+              viewBox="0 0 128 128"
+              fill="none"
+              aria-label="ClearLens Logo"
+              className="h-9 w-9 shrink-0 rounded-[9px] shadow-sm ring-1 ring-slate-200/80 dark:ring-slate-700/60"
+            >
+              <defs>
+                <linearGradient id="cl-sidebar-grad" x1="16" y1="16" x2="112" y2="112" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stopColor="#0EA5E9" />
+                  <stop offset="55%" stopColor="#14B8A6" />
+                  <stop offset="100%" stopColor="#6366F1" />
+                </linearGradient>
+                <linearGradient id="cl-sidebar-inner" x1="36" y1="36" x2="92" y2="92" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stopColor="#38BDF8" stopOpacity="0.28" />
+                  <stop offset="100%" stopColor="#2DD4BF" stopOpacity="0.12" />
+                </linearGradient>
+              </defs>
+              <rect width="128" height="128" rx="30" fill="#0F172A" />
+              <circle cx="64" cy="64" r="42" stroke="url(#cl-sidebar-grad)" strokeWidth="10" />
+              <circle cx="64" cy="64" r="28" fill="url(#cl-sidebar-inner)" />
+              <path
+                d="M64 40L68.8 55.2L84 60L68.8 64.8L64 80L59.2 64.8L44 60L59.2 55.2L64 40Z"
+                fill="url(#cl-sidebar-grad)"
+              />
+              <circle cx="94" cy="94" r="7" fill="#14B8A6" />
+            </svg>
             <div>
               <div className="text-base font-bold tracking-tight">ClearLens</div>
               <div className="text-[11px] text-slate-500 dark:text-slate-400">v0.1.1 · clens</div>
