@@ -16,6 +16,17 @@ use tempfile::tempdir;
 
 static ENV_LOCK: Mutex<()> = Mutex::new(());
 
+fn lock_env() -> std::sync::MutexGuard<'static, ()> {
+    ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner())
+}
+
+fn setup_isolated_home(dir: &std::path::Path) {
+    std::env::set_var("HOME", dir);
+    let xdg = dir.join(".local/share");
+    std::env::set_var("XDG_DATA_HOME", &xdg);
+    std::env::set_var("CLEARLENS_TRASH_DIR", xdg.join("Trash"));
+}
+
 #[test]
 fn embedded_rule_pack_loads_and_validates_over_25_rules() {
     let files = load_all_rules().expect("embedded TOML rules should parse and validate");
@@ -28,7 +39,7 @@ fn embedded_rule_pack_loads_and_validates_over_25_rules() {
 
 #[test]
 fn blocklist_rejects_sensitive_and_user_asset_paths() {
-    let _g = ENV_LOCK.lock().unwrap();
+    let _g = lock_env();
     let dir = tempdir().unwrap();
     std::env::set_var("HOME", dir.path());
 
@@ -52,7 +63,7 @@ fn blocklist_rejects_sensitive_and_user_asset_paths() {
 #[cfg(unix)]
 #[test]
 fn symlink_trap_never_counts_or_deletes_external_target() {
-    let _g = ENV_LOCK.lock().unwrap();
+    let _g = lock_env();
     let dir = tempdir().unwrap();
     std::env::set_var("HOME", dir.path());
 
@@ -121,10 +132,9 @@ fn icloud_stub_placeholders_are_skipped_by_space_lens() {
 
 #[test]
 fn cold_project_scanner_only_flags_stale_projects_and_respects_dry_run_and_audit() {
-    let _g = ENV_LOCK.lock().unwrap();
+    let _g = lock_env();
     let dir = tempdir().unwrap();
-    std::env::set_var("HOME", dir.path());
-    std::env::set_var("XDG_DATA_HOME", dir.path().join(".local/share"));
+    setup_isolated_home(dir.path());
 
     let workspace = dir.path().join("Projects");
     let stale_proj = workspace.join("old-web-app");
@@ -231,7 +241,7 @@ fn cold_project_scanner_only_flags_stale_projects_and_respects_dry_run_and_audit
 
 #[test]
 fn blocklist_blocks_dotdot_traversal_windows_prefixes_and_ancestor_symlinks() {
-    let _g = ENV_LOCK.lock().unwrap();
+    let _g = lock_env();
     let dir = tempdir().unwrap();
     std::env::set_var("HOME", dir.path());
 
@@ -277,7 +287,7 @@ fn blocklist_blocks_dotdot_traversal_windows_prefixes_and_ancestor_symlinks() {
 
 #[test]
 fn glob_anchor_preserves_container_root_and_enforces_clean_time_toctou() {
-    let _g = ENV_LOCK.lock().unwrap();
+    let _g = lock_env();
     let dir = tempdir().unwrap();
     std::env::set_var("HOME", dir.path());
 
@@ -333,7 +343,7 @@ fn glob_anchor_preserves_container_root_and_enforces_clean_time_toctou() {
 
 #[test]
 fn verbatim_windows_paths_secondary_drives_and_unsafe_custom_rules_blocked() {
-    let _g = ENV_LOCK.lock().unwrap();
+    let _g = lock_env();
     let dir = tempdir().unwrap();
     std::env::set_var("HOME", dir.path());
 
@@ -377,10 +387,9 @@ fn verbatim_windows_paths_secondary_drives_and_unsafe_custom_rules_blocked() {
 
 #[test]
 fn ignore_whitelist_protects_nested_subdirectories_and_zero_byte_toctou_accounting() {
-    let _g = ENV_LOCK.lock().unwrap();
+    let _g = lock_env();
     let dir = tempdir().unwrap();
-    std::env::set_var("HOME", dir.path());
-    std::env::set_var("XDG_DATA_HOME", dir.path().join(".local/share"));
+    setup_isolated_home(dir.path());
 
     let logs_root = dir.path().join("Library/Logs");
     let clean_me = logs_root.join("CleanMe");
@@ -482,11 +491,9 @@ fn ignore_whitelist_protects_nested_subdirectories_and_zero_byte_toctou_accounti
 
 #[test]
 fn pass3_credentials_browser_secrets_vdisks_and_case_insensitive_guards() {
-    let _g = ENV_LOCK.lock().unwrap();
+    let _g = lock_env();
     let dir = tempdir().unwrap();
-    std::env::set_var("HOME", dir.path());
-    let xdg = dir.path().join(".local/share");
-    std::env::set_var("XDG_DATA_HOME", &xdg);
+    setup_isolated_home(dir.path());
 
     // 1. Credentials, ClearLens state, browser secrets, and virtual disk images MUST be blocked at engine level
     for blocked in [

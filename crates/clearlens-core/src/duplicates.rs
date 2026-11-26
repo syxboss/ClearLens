@@ -348,10 +348,23 @@ fn collect_candidates(
     if is_path_ignored(dir, ignore_paths) {
         return;
     }
-    let Ok(entries) = fs::read_dir(dir) else {
+    let Ok(rd) = fs::read_dir(dir) else {
         return;
     };
-    for entry in entries.flatten() {
+    // Sort directory entries deterministically so hardlink deduplication across filesystems
+    // (ext4, APFS, NTFS, overlayfs) consistently preserves non-transient / shorter-named originals.
+    let mut entries: Vec<_> = rd.flatten().collect();
+    entries.sort_by(|a, b| {
+        let an = a.file_name().to_string_lossy().to_ascii_lowercase();
+        let bn = b.file_name().to_string_lossy().to_ascii_lowercase();
+        let a_trans = u8::from(matches!(an.as_str(), "downloads" | "tmp" | "temp") || an.contains("hardlink") || an.contains("copy"));
+        let b_trans = u8::from(matches!(bn.as_str(), "downloads" | "tmp" | "temp") || bn.contains("hardlink") || bn.contains("copy"));
+        a_trans
+            .cmp(&b_trans)
+            .then_with(|| an.len().cmp(&bn.len()))
+            .then_with(|| an.cmp(&bn))
+    });
+    for entry in entries {
         if cancel.load(Ordering::Relaxed) {
             return;
         }

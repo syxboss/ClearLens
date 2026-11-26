@@ -16,12 +16,23 @@ use tempfile::tempdir;
 
 static TEST_ENV_LOCK: Mutex<()> = Mutex::new(());
 
+fn lock_test_env() -> std::sync::MutexGuard<'static, ()> {
+    TEST_ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner())
+}
+
+fn setup_isolated_home(dir: &std::path::Path) -> std::path::PathBuf {
+    std::env::set_var("HOME", dir);
+    let xdg = dir.join(".local/share");
+    std::env::set_var("XDG_DATA_HOME", &xdg);
+    std::env::set_var("CLEARLENS_TRASH_DIR", xdg.join("Trash"));
+    xdg
+}
+
 #[test]
 fn p0_ollama_refcount_gc_reclaims_only_exclusive_blobs_and_preserves_shared_layers() {
-    let _g = TEST_ENV_LOCK.lock().unwrap();
+    let _g = lock_test_env();
     let dir = tempdir().unwrap();
-    std::env::set_var("HOME", dir.path());
-    std::env::set_var("XDG_DATA_HOME", dir.path().join(".local/share"));
+    let _xdg = setup_isolated_home(dir.path());
 
     let models_dir = dir.path().join(".ollama/models");
     let manifests_dir = models_dir.join("manifests/registry.ollama.ai/library");
@@ -89,10 +100,9 @@ fn p0_ollama_refcount_gc_reclaims_only_exclusive_blobs_and_preserves_shared_laye
 
 #[test]
 fn p1_blake3_three_stage_duplicates_and_anti_wipe_safety_lock() {
-    let _g = TEST_ENV_LOCK.lock().unwrap();
+    let _g = lock_test_env();
     let dir = tempdir().unwrap();
-    std::env::set_var("HOME", dir.path());
-    std::env::set_var("XDG_DATA_HOME", dir.path().join(".local/share"));
+    let _xdg = setup_isolated_home(dir.path());
 
     let media = dir.path().join("Media");
     let downloads = dir.path().join("Downloads");
@@ -153,10 +163,9 @@ fn p1_blake3_three_stage_duplicates_and_anti_wipe_safety_lock() {
 
 #[test]
 fn p1_app_uninstaller_and_orphan_residue_hunter() {
-    let _g = TEST_ENV_LOCK.lock().unwrap();
+    let _g = lock_test_env();
     let dir = tempdir().unwrap();
-    std::env::set_var("HOME", dir.path());
-    std::env::set_var("XDG_DATA_HOME", dir.path().join(".local/share"));
+    let _xdg = setup_isolated_home(dir.path());
 
     let apps_dir = dir.path().join("Applications");
     std::env::set_var("CLEARLENS_APPS_DIR", &apps_dir);
@@ -222,9 +231,9 @@ fn p1_app_uninstaller_and_orphan_residue_hunter() {
 
 #[test]
 fn p0_space_lens_deep_drilldown_flag_config_and_elevation_guard() {
-    let _g = TEST_ENV_LOCK.lock().unwrap();
+    let _g = lock_test_env();
     let dir = tempdir().unwrap();
-    std::env::set_var("HOME", dir.path());
+    let _xdg = setup_isolated_home(dir.path());
 
     // Build a 6-level deep folder to test `has_more_children` at depth 4
     let deep = dir.path().join("a/b/c/d/e/f");
@@ -267,10 +276,10 @@ fn p0_space_lens_deep_drilldown_flag_config_and_elevation_guard() {
 
 #[test]
 fn vdisk_windows_wsl2_and_docker_vhdx_detection_and_compact_script() {
-    let _g = TEST_ENV_LOCK.lock().unwrap();
+    let _g = lock_test_env();
     let dir = tempdir().unwrap();
     let local_appdata = dir.path().join("AppData/Local");
-    std::env::set_var("HOME", dir.path());
+    let _xdg = setup_isolated_home(dir.path());
     std::env::set_var("LOCALAPPDATA", &local_appdata);
 
     let ubuntu_dir = local_appdata
@@ -310,9 +319,9 @@ fn vdisk_windows_wsl2_and_docker_vhdx_detection_and_compact_script() {
 
 #[test]
 fn vdisk_macos_sparse_docker_raw_distinguishes_physical_vs_logical() {
-    let _g = TEST_ENV_LOCK.lock().unwrap();
+    let _g = lock_test_env();
     let dir = tempdir().unwrap();
-    std::env::set_var("HOME", dir.path());
+    let _xdg = setup_isolated_home(dir.path());
 
     let vm_dir = dir
         .path()
@@ -355,11 +364,9 @@ fn vdisk_macos_sparse_docker_raw_distinguishes_physical_vs_logical() {
 
 #[test]
 fn code_review_regressions_ollama_traversal_trash_collisions_tilde_and_ps_quoting() {
-    let _g = TEST_ENV_LOCK.lock().unwrap();
+    let _g = lock_test_env();
     let dir = tempdir().unwrap();
-    std::env::set_var("HOME", dir.path());
-    let xdg = dir.path().join(".local/share");
-    std::env::set_var("XDG_DATA_HOME", &xdg);
+    let xdg = setup_isolated_home(dir.path());
 
     // 1. Ollama manifest with malicious `../../outside_secret` digest MUST NOT traverse outside blobs/
     let outside_secret = dir.path().join("outside_secret");
@@ -451,11 +458,9 @@ fn code_review_regressions_ollama_traversal_trash_collisions_tilde_and_ps_quotin
 
 #[test]
 fn pass3_elevated_scope_ollama_spoof_duplicate_toctou_and_uninstaller_scope() {
-    let _g = TEST_ENV_LOCK.lock().unwrap();
+    let _g = lock_test_env();
     let dir = tempdir().unwrap();
-    std::env::set_var("HOME", dir.path());
-    let xdg = dir.path().join(".local/share");
-    std::env::set_var("XDG_DATA_HOME", &xdg);
+    let _xdg = setup_isolated_home(dir.path());
 
     // 1. Elevated worker MUST reject non-elevated rules AND out-of-scope paths for elevated rules
     let fake_windir = dir.path().join("FakeWindows");
