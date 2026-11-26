@@ -5,6 +5,16 @@ All notable changes to ClearLens will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] - 2026-11-26
+
+### Fixed
+- **Duplicate Finder (`duplicates.rs`)**: Deterministically sort directory traversal entries before hardlink `(dev, ino)` deduplication so non-transient, shorter-named originals are consistently retained across `ext4`, `overlayfs`, `APFS`, and `NTFS`.
+- **Windows Cloud Placeholder Safety (`platform/windows.rs`)**: Detect `.icloud` stub placeholder filenames in `inspect_path_meta_windows` in addition to NTFS `OFFLINE` / `RECALL_ON_*` attributes.
+- **Cross-Platform CI & Test Suite**:
+  - Punch APFS sparse holes via `F_PUNCHHOLE` in the macOS virtual disk sparse test so APFS physical vs. logical allocation is verified accurately.
+  - Prevent cascading mutex `PoisonError` across isolated test runs and isolate `USERPROFILE` / `LOCALAPPDATA` / `APPDATA` / `CLEARLENS_TRASH_DIR` across macOS, Linux, and Windows runners.
+  - Enable `fail-fast: false` in CI matrix and group Dependabot updates monthly to reduce PR noise.
+
 ## [0.1.0] - 2026-11-26
 
 ### Added

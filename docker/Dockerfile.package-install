@@ -1,4 +1,4 @@
-# Full Packaging, Clean-OS Installation & In-Container File Cleanup Test for ClearLens v0.1
+# Full Packaging, Clean-OS Installation & In-Container File Cleanup Test for ClearLens v0.1.1
 # Stage 1 builds real .deb and .tar.gz release packages; Stage 3 installs ONLY the .deb in a
 # clean Debian container (no Rust toolchain, no source tree) and performs real file cleanup.
 
@@ -21,7 +21,7 @@ RUN cargo build --release -p clearlens-cli && strip /app/target/release/clens
 RUN bash -c '\
   set -euo pipefail; \
   ARCH=$(dpkg --print-architecture); \
-  VER=0.1.0; \
+  VER=0.1.1; \
   PKG_ROOT="/tmp/deb/clearlens-cli_${VER}_${ARCH}"; \
   mkdir -p "${PKG_ROOT}/DEBIAN" "${PKG_ROOT}/usr/bin" "${PKG_ROOT}/usr/share/doc/clearlens" "${PKG_ROOT}/usr/share/clearlens/rules"; \
   cp /app/target/release/clens "${PKG_ROOT}/usr/bin/clens"; \
@@ -48,19 +48,19 @@ RUN npm install --no-audit --no-fund
 RUN npx tsc --noEmit
 RUN npx vitest run > /tmp/web_vitest_report.txt && cat /tmp/web_vitest_report.txt
 RUN npx vite build
-RUN mkdir -p /pkg && tar -czf /pkg/clearlens-desktop-web-0.1.0.tar.gz -C /app/apps/desktop dist
+RUN mkdir -p /pkg && tar -czf /pkg/clearlens-desktop-web-0.1.1.tar.gz -C /app/apps/desktop dist
 
 # Clean runtime OS container with ZERO compiler or source code — installs ONLY the built .deb!
 FROM debian:bookworm-slim AS clean-install-verify
 COPY --from=rust-packager /pkg /pkg
 COPY --from=rust-packager /tmp/cargo_test_report.txt /reports/cargo_test_report.txt
-COPY --from=web-packager /pkg/clearlens-desktop-web-0.1.0.tar.gz /pkg/
+COPY --from=web-packager /pkg/clearlens-desktop-web-0.1.1.tar.gz /pkg/
 COPY --from=web-packager /tmp/web_vitest_report.txt /reports/web_vitest_report.txt
 COPY tests/docker_package_install_cleanup.sh /usr/local/bin/docker_package_install_cleanup.sh
 
 RUN bash -o pipefail -c '\
   chmod +x /usr/local/bin/docker_package_install_cleanup.sh \
-  && dpkg -i /pkg/clearlens-cli_0.1.0_*.deb \
+  && dpkg -i /pkg/clearlens-cli_0.1.1_*.deb \
   && /usr/local/bin/docker_package_install_cleanup.sh | tee /reports/pkg_install_cleanup_report.txt \
 '
 

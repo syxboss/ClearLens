@@ -2,7 +2,7 @@
 set -euo pipefail
 
 echo "==================================================================="
-echo " ClearLens v0.1 — Docker Package, Clean Install & File Cleanup E2E"
+echo " ClearLens v0.1.1 — Docker Package, Clean Install & File Cleanup E2E"
 echo "==================================================================="
 
 echo ""
@@ -10,7 +10,7 @@ echo "=== [1/8] Verify Packaged .deb/.tar.gz Checksums & Clean dpkg Installation
 (cd /pkg && sha256sum -c SHA256SUMS)
 dpkg -s clearlens-cli | grep -E "^(Package|Status|Version|Architecture):"
 test "$(which clens)" = "/usr/bin/clens"
-clens --version | grep -q "0.1.0"
+clens --version | grep -q "0.1.1"
 clens rules validate
 clens status | tee /tmp/clens_status.txt
 grep -q "Allocator        : mimalloc" /tmp/clens_status.txt
@@ -201,6 +201,6 @@ echo ""
 echo "=== [8/8] Verify Clean Package Removal & Reinstall Lifecycle ==="
 dpkg -r clearlens-cli >/dev/null
 test ! -f /usr/bin/clens
-dpkg -i /pkg/clearlens-cli_0.1.0_*.deb >/dev/null
+dpkg -i /pkg/clearlens-cli_0.1.1_*.deb >/dev/null
 test -x /usr/bin/clens
 echo "PASS: .deb install -> real container cleanup -> remove -> reinstall verified!"
